@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>鑽石婚號月台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Noto+Serif+TC:wght@700;900&family=Oswald:wght@500;600&display=swap">
+<style>
+:root{
+  --night:#0A0E1A;--night2:#121A30;--line:#2F3A55;--ink:#E8E4DA;--muted:#9AA0B2;
+  --paper:#F4EAD2;--paperInk:#2E2420;--blue:#1D3F7A;--red:#B3261E;--gold:#FFD58A;
+  --serif:"Noto Serif TC","Songti TC",serif;--sans:"Noto Sans TC","PingFang TC",sans-serif;--cond:"Oswald","Arial Narrow",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important} /* 不然 .crew 的 display:grid 會蓋掉 hidden，阿公阿嬤就看到問卷段 */
+body{background:var(--night);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.75;margin:0}
+h1,h2,h3{font-family:var(--serif);font-weight:900;text-wrap:balance;margin:0;line-height:1.3}
+p{margin:0}
+.wrap{max-width:760px;margin:0 auto;padding-inline:16px}
+.eyebrow{font-family:var(--cond);font-size:13px;letter-spacing:.18em;color:var(--gold)}
+.muted{color:var(--muted)}
+button{font:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+/* ── 開場：駛進月台的列車 ── */
+.hero{position:relative;max-width:960px;margin:0 auto}
+.hero svg{display:block;width:100%;height:auto}
+.count{position:absolute;inset:3% 0 auto;text-align:center;display:grid;gap:2px;justify-items:center;pointer-events:none}
+.count .eyebrow{font-size:clamp(13px,2.4vw,17px);color:var(--paper)}
+.clock{display:flex;gap:clamp(6px,1.6vw,14px);align-items:flex-start;font-family:var(--cond);font-weight:600;color:var(--gold);font-variant-numeric:tabular-nums;text-shadow:0 0 18px rgba(255,181,71,.45)}
+.clock .u{display:grid;justify-items:center;line-height:1}
+.clock .n{font-size:clamp(28px,8vw,72px)}
+.clock .l{font-family:var(--sans);font-size:clamp(11px,2vw,14px);color:var(--paper);margin-top:4px;font-weight:700}
+.clock .sep{font-size:clamp(28px,7vw,58px);line-height:1;opacity:.7}
+#train{transform:translateX(-820px)}
+#train.in{transform:none;transition:transform 3.4s cubic-bezier(.16,.84,.3,1)}
+.boarded{text-align:center;padding:10px 16px 0;font-size:15px}
+.boarded b{color:var(--gold);font-family:var(--cond);font-size:18px}
+
+/* ── 邀請 ── */
+.invite{display:grid;gap:12px;padding-block:36px 8px}
+.invite h1{font-size:clamp(26px,6vw,38px)}
+.invite h1 em{font-style:normal;color:var(--gold)}
+
+/* ── 時刻表 ── */
+.timetable{padding-block:36px 8px;display:grid;gap:14px}
+.timetable h2{font-size:26px}
+.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.day{background:#05070D;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.day h3{font-family:var(--sans);font-size:16px;background:var(--blue);color:var(--paper);padding:8px 14px;display:flex;justify-content:space-between}
+.day h3 span{font-family:var(--cond);letter-spacing:.06em}
+.day ol{list-style:none;margin:0;padding:4px 0}
+.day li{display:grid;grid-template-columns:4.2em 1fr;gap:10px;padding:8px 14px;border-top:1px dashed #1E2740}
+.day li:first-child{border-top:0}
+.day time{font-family:var(--cond);color:var(--gold);font-size:18px;font-variant-numeric:tabular-nums}
+.day li small{display:block;color:var(--muted);font-size:14px;line-height:1.5}
+.day li.key>span{font-weight:700}
+.tt-note{font-size:17px;color:var(--ink)}
+
+/* ── 家人限定：問卷說明（網址加 #crew 才出現） ── */
+.crew{margin-top:44px;background:var(--paper);color:var(--paperInk);border-radius:6px;padding:20px;display:grid;gap:14px}
+.crew h2{font-size:24px;color:var(--blue)}
+.stamp{justify-self:start;border:2px solid var(--red);color:var(--red);font-weight:900;letter-spacing:.12em;padding:0 10px;transform:rotate(-2deg);font-size:14px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:0;padding:0;list-style:none}
+.steps li{background:#fff;border-radius:6px;padding:12px;font-size:15px;line-height:1.6}
+.steps b{display:block;color:var(--red);font-size:16px}
+.links{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.links a{display:flex;justify-content:space-between;gap:10px;background:var(--blue);color:var(--paper);text-decoration:none;font-weight:700;padding:10px 14px;border-radius:4px}
+.rules{margin:0;padding-left:1.2em;font-size:15px}
+.crew .note{font-size:14px;color:#6A5E50}
+.peek{display:grid;gap:18px}
+.peek h3{font-family:var(--serif);font-size:19px;color:var(--blue)}
+.peek .intro{font-size:15px;color:#6A5E50}
+.peek ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:8px}
+.peek li{background:#fff;border-left:4px solid var(--red);border-radius:4px;padding:8px 12px;font-family:var(--serif);font-weight:700;font-size:17px;line-height:1.6}
+.crew .who{font-size:14px;color:var(--red);font-weight:700}
+
+/* ── 月台留言 ── */
+.platform{padding-block:44px 0;display:grid;gap:12px}
+.platform h2{font-size:26px}
+.strip{overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;background-attachment:local;background-color:#0B1733;
+  /* 由上到下：月台地面｜遠山｜星星｜夜空到地平線的晚霞（跟開場同一片天） */
+  background-image:linear-gradient(to bottom,transparent calc(100% - 46px),#E7DFCC calc(100% - 46px),#E7DFCC calc(100% - 36px),#8A7457 calc(100% - 36px)),
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22800%22%20height%3D%22120%22%20viewBox%3D%220%200%20800%20120%22%3E%3Cpath%20d%3D%22M0%2080%20C80%2020%20150%2040%20230%2010%20C320%20-20%20380%2040%20470%2020%20C560%200%20640%2040%20800%2015%20V120%20H0Z%22%20fill%3D%22%2326345A%22/%3E%3Cpath%20d%3D%22M0%20105%20C120%2065%20210%2090%20320%2070%20C430%2050%20520%2085%20640%2062%20C720%2048%20770%2066%20800%2058%20V120%20H0Z%22%20fill%3D%22%231D2847%22/%3E%3C/svg%3E"),url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22250%22%3E%3Cg%20fill%3D%22%23F4EAD2%22%3E%3Ccircle%20cx%3D%22103.6%22%20cy%3D%2237.7%22%20r%3D%221.2%22%20opacity%3D%220.34%22/%3E%3Ccircle%20cx%3D%22171.5%22%20cy%3D%2291.4%22%20r%3D%220.6%22%20opacity%3D%220.60%22/%3E%3Ccircle%20cx%3D%2212.0%22%20cy%3D%22108.4%22%20r%3D%220.6%22%20opacity%3D%220.35%22/%3E%3Ccircle%20cx%3D%22135.8%22%20cy%3D%22206.7%22%20r%3D%220.6%22%20opacity%3D%220.43%22/%3E%3Ccircle%20cx%3D%22200.8%22%20cy%3D%22236.9%22%20r%3D%221.1%22%20opacity%3D%220.54%22/%3E%3Ccircle%20cx%3D%22312.4%22%20cy%3D%2211.6%22%20r%3D%221.4%22%20opacity%3D%220.47%22/%3E%3Ccircle%20cx%3D%2246.2%22%20cy%3D%2229.4%22%20r%3D%220.8%22%20opacity%3D%220.79%22/%3E%3Ccircle%20cx%3D%2257.8%22%20cy%3D%22145.4%22%20r%3D%221.2%22%20opacity%3D%220.52%22/%3E%3Ccircle%20cx%3D%22175.3%22%20cy%3D%2215.7%22%20r%3D%220.6%22%20opacity%3D%220.42%22/%3E%3Ccircle%20cx%3D%22217.7%22%20cy%3D%22106.9%22%20r%3D%220.8%22%20opacity%3D%220.65%22/%3E%3Ccircle%20cx%3D%22145.0%22%20cy%3D%2274.9%22%20r%3D%221.4%22%20opacity%3D%220.72%22/%3E%3Ccircle%20cx%3D%2278.1%22%20cy%3D%22143.6%22%20r%3D%221.1%22%20opacity%3D%220.83%22/%3E%3Ccircle%20cx%3D%22233.4%22%20cy%3D%2272.0%22%20r%3D%221.6%22%20opacity%3D%220.37%22/%3E%3Ccircle%20cx%3D%22133.8%22%20cy%3D%22189.3%22%20r%3D%220.7%22%20opacity%3D%220.59%22/%3E%3Ccircle%20cx%3D%2212.5%22%20cy%3D%22167.1%22%20r%3D%221.3%22%20opacity%3D%220.64%22/%3E%3Ccircle%20cx%3D%22280.2%22%20cy%3D%2278.4%22%20r%3D%221.3%22%20opacity%3D%220.66%22/%3E%3Ccircle%20cx%3D%22185.6%22%20cy%3D%22114.1%22%20r%3D%221.4%22%20opacity%3D%220.87%22/%3E%3Ccircle%20cx%3D%22151.7%22%20cy%3D%22166.0%22%20r%3D%220.6%22%20opacity%3D%220.72%22/%3E%3Ccircle%20cx%3D%22207.1%22%20cy%3D%22248.3%22%20r%3D%221.4%22%20opacity%3D%220.47%22/%3E%3Ccircle%20cx%3D%22123.5%22%20cy%3D%22167.2%22%20r%3D%220.5%22%20opacity%3D%220.58%22/%3E%3Ccircle%20cx%3D%2253.8%22%20cy%3D%2229.3%22%20r%3D%220.6%22%20opacity%3D%220.76%22/%3E%3Ccircle%20cx%3D%2241.4%22%20cy%3D%2261.9%22%20r%3D%220.9%22%20opacity%3D%220.82%22/%3E%3Ccircle%20cx%3D%2225.8%22%20cy%3D%22112.3%22%20r%3D%221.1%22%20opacity%3D%220.83%22/%3E%3Ccircle%20cx%3D%22262.2%22%20cy%3D%22216.0%22%20r%3D%220.8%22%20opacity%3D%220.55%22/%3E%3Ccircle%20cx%3D%22114.8%22%20cy%3D%22221.0%22%20r%3D%221.6%22%20opacity%3D%220.39%22/%3E%3Ccircle%20cx%3D%2256.4%22%20cy%3D%2258.0%22%20r%3D%220.8%22%20opacity%3D%220.59%22/%3E%3C/g%3E%3C/svg%3E"),linear-gradient(to bottom,#0B1733,#2B3D68 75%,#6E5C80);
+  background-repeat:no-repeat,repeat-x,repeat,no-repeat;background-size:auto,800px 120px,320px 250px,auto;background-position:0 0,0 calc(100% - 46px),0 0,0 0}
+.people{display:flex;align-items:flex-end;gap:4px;height:400px;padding:0 120px 46px;width:max-content}
+.person{position:relative;width:86px;flex:none;scroll-snap-align:center}
+.who-btn{display:grid;justify-items:center;width:100%;background:none;border:0;padding:0;cursor:grab;color:inherit;touch-action:pan-x;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.held{position:fixed;z-index:50;width:86px;height:auto;pointer-events:none;cursor:grabbing;filter:drop-shadow(0 14px 10px rgba(0,0,0,.45))}
+.ghost{visibility:hidden}
+.who-btn svg{width:86px;height:auto;display:block;transition:transform .2s}
+.who-btn:hover svg,.person.open .who-btn svg{transform:translateY(-4px)}
+.tag{font-size:13px;font-weight:700;color:#fff;border-radius:11px;padding:0 9px;border:1.5px solid #fff;white-space:nowrap;margin-top:2px;line-height:20px}
+.badge{position:absolute;top:-6px;right:8px;min-width:22px;height:22px;border-radius:11px;background:var(--red);color:#fff;font:700 13px/22px var(--cond);text-align:center;padding:0 6px;border:2px solid var(--night)}
+.bubbles{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);width:220px;display:none;flex-direction:column;gap:8px;padding-bottom:10px;z-index:2}
+.person.open{z-index:3}.person.open .badge{display:none}
+.heart{position:absolute;top:18px;left:50%;pointer-events:none;color:#FF6B81;line-height:1;z-index:4;text-shadow:0 0 6px rgba(255,107,129,.6)}
+.loves{font:700 12px/1.4 var(--cond);color:#FF8FA0;min-height:17px}
+.person.open .bubbles{display:flex}
+.bubble{position:relative;background:var(--paper);color:var(--paperInk);border-radius:14px;padding:8px 12px;font-size:15px;line-height:1.55;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.bubble:last-child::after{content:"";position:absolute;left:50%;bottom:-9px;margin-left:-9px;border:9px solid transparent;border-bottom:0;border-top-color:var(--paper)}
+.bubble p{white-space:pre-wrap;overflow-wrap:anywhere}
+.bubble .meta{display:flex;justify-content:space-between;align-items:center;margin-top:4px;font-size:12px;color:#7A6E60}
+.like{background:#fff;border:1px solid #D9CCB0;border-radius:999px;padding:0 9px;font-size:13px;cursor:pointer;color:var(--paperInk);font-variant-numeric:tabular-nums}
+.like[aria-pressed="true"]{background:var(--gold);border-color:var(--gold)}
+.more{background:var(--blue);color:var(--paper);border:0;border-radius:999px;font-size:13px;padding:2px 10px;cursor:pointer;align-self:center}
+.empty{background:var(--night2);color:var(--muted);border-radius:14px;padding:8px 12px;font-size:14px;text-align:center}
+.hint{font-size:14px}
+
+.compose{background:var(--night2);border-radius:6px;padding:16px;display:grid;gap:10px;margin-top:18px}
+.compose label{font-size:15px;color:var(--muted)}
+.compose select,.compose textarea{width:100%;background:var(--night);color:var(--ink);border:1px solid var(--line);border-radius:4px;font:inherit;padding:8px 10px}
+.compose textarea{min-height:90px;resize:vertical}
+.sendrow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.send{background:var(--gold);color:var(--night);border:0;border-radius:4px;font-weight:900;padding:8px 20px;cursor:pointer}
+.send:disabled{opacity:.5;cursor:wait}
+.status{font-size:14px;color:var(--muted)}
+.status.err{color:#FF8A80}
+footer{text-align:center;font-size:13px;padding-block:40px}
+@media (prefers-reduced-motion:reduce){#train,#train.in{transform:none;transition:none}.who-btn svg{transition:none}}
+.hint b{color:var(--gold)}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <svg viewBox="0 172 800 404" role="img" aria-label="夜晚的車埕車站舊址月台，一列藍色火車正駛進站，站牌寫著 2026.12.25 到 26">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0B1733"/><stop offset=".62" stop-color="#2B3D68"/><stop offset="1" stop-color="#6E5C80"/></linearGradient>
+      <filter id="blur" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="9"/></filter>
+      <pattern id="tiles" width="11" height="12" patternUnits="userSpaceOnUse"><rect width="11" height="12" fill="#B8693F"/><line x1=".5" y1="0" x2=".5" y2="12" stroke="#94522F" stroke-width="1.2"/></pattern>
+      <pattern id="sleepers" width="18" height="14" patternUnits="userSpaceOnUse"><rect width="18" height="14" fill="#3A332C"/><rect x="2" width="9" height="14" fill="#29231E"/></pattern>
+      <symbol id="station" viewBox="0 0 400 230">
+        <rect x="246" y="16" width="16" height="16" fill="#7A4A2E"/>
+        <polygon points="14,80 48,30 352,30 386,80" fill="url(#tiles)"/>
+        <rect x="10" y="78" width="380" height="6" fill="#6E4128"/>
+        <rect x="60" y="84" width="280" height="116" fill="#EFE3C8"/>
+        <rect x="60" y="178" width="280" height="22" fill="#DDCBA6"/>
+        <rect x="28" y="84" width="8" height="116" fill="#B3261E"/><rect x="364" y="84" width="8" height="116" fill="#B3261E"/>
+        <path d="M36 86 L60 106 M364 86 L340 106" stroke="#B3261E" stroke-width="4"/>
+        <g stroke="#B3261E" stroke-width="5"><path d="M92 172 V124 a27 27 0 0 1 54 0 V172 Z" fill="#8E2A22"/><path d="M254 172 V124 a27 27 0 0 1 54 0 V172 Z" fill="#8E2A22"/></g>
+        <path d="M95 124 a24 24 0 0 1 48 0 Z" fill="#4E8A8C"/><path d="M257 124 a24 24 0 0 1 48 0 Z" fill="#4E8A8C"/>
+        <path d="M119 126 V172 M281 126 V172" stroke="#B3261E" stroke-width="3"/>
+        <rect x="176" y="102" width="48" height="8" fill="#6E4128"/>
+        <rect x="182" y="110" width="36" height="90" fill="#C0302A"/><rect x="189" y="118" width="22" height="34" fill="#2F3C44"/>
+        <rect x="104" y="182" width="14" height="18" fill="#4A4A4A"/>
+      </symbol>
+      <symbol id="loco" viewBox="0 0 200 110">
+        <rect x="72" y="8" width="58" height="26" rx="3" fill="#1D3F7A"/>
+        <rect x="80" y="14" width="18" height="12" rx="2" fill="#FFD58A"/><rect x="104" y="14" width="18" height="12" rx="2" fill="#FFD58A"/>
+        <rect x="8" y="32" width="184" height="56" rx="4" fill="#1D3F7A"/>
+        <path d="M22 42 V60 M30 42 V60 M38 42 V60 M46 42 V60 M154 42 V60 M162 42 V60 M170 42 V60 M178 42 V60" stroke="#163262" stroke-width="2"/>
+        <rect x="8" y="68" width="184" height="5" fill="#E8B83A"/>
+        <rect x="18" y="88" width="164" height="10" fill="#24262B"/>
+        <g fill="#24262B"><circle cx="40" cy="99" r="9"/><circle cx="64" cy="99" r="9"/><circle cx="136" cy="99" r="9"/><circle cx="160" cy="99" r="9"/></g>
+        <circle cx="190" cy="50" r="5" fill="#FFF3C4"/>
+      </symbol>
+      <symbol id="car" viewBox="0 0 540 110">
+        <rect x="4" y="16" width="532" height="12" rx="6" fill="#737B88"/>
+        <g fill="#5E6571"><rect x="60" y="10" width="40" height="8" rx="2"/><rect x="250" y="10" width="40" height="8" rx="2"/><rect x="440" y="10" width="40" height="8" rx="2"/></g>
+        <rect x="4" y="26" width="532" height="62" fill="#1D3F7A"/>
+        <rect x="8" y="32" width="14" height="52" rx="2" fill="#163262"/><rect x="518" y="32" width="14" height="52" rx="2" fill="#163262"/>
+        <g fill="#26314D"><rect x="30" y="38" width="26" height="24" rx="3"/><rect x="62" y="38" width="26" height="24" rx="3"/><rect x="94" y="38" width="26" height="24" rx="3"/><rect x="126" y="38" width="26" height="24" rx="3"/><rect x="158" y="38" width="26" height="24" rx="3"/><rect x="190" y="38" width="26" height="24" rx="3"/><rect x="222" y="38" width="26" height="24" rx="3"/><rect x="254" y="38" width="26" height="24" rx="3"/><rect x="286" y="38" width="26" height="24" rx="3"/><rect x="318" y="38" width="26" height="24" rx="3"/><rect x="350" y="38" width="26" height="24" rx="3"/><rect x="382" y="38" width="26" height="24" rx="3"/><rect x="414" y="38" width="26" height="24" rx="3"/><rect x="446" y="38" width="26" height="24" rx="3"/><rect x="478" y="38" width="26" height="24" rx="3"/></g>
+        <rect x="4" y="72" width="532" height="3" fill="#F2F0EA"/><rect x="4" y="78" width="532" height="2" fill="#F2F0EA"/>
+        <rect x="30" y="88" width="480" height="8" fill="#24262B"/>
+        <g fill="#24262B"><circle cx="60" cy="99" r="9"/><circle cx="86" cy="99" r="9"/><circle cx="454" cy="99" r="9"/><circle cx="480" cy="99" r="9"/></g>
+      </symbol>
+    </defs>
+
+    <rect y="172" width="800" height="404" fill="url(#sky)"/>
+    <g id="stars" fill="#F4EAD2"></g>
+    <mask id="moonCut"><rect x="700" y="185" width="100" height="80" fill="#fff"/><circle cx="772" cy="210" r="17" fill="#000"/></mask>
+    <circle cx="762" cy="218" r="19" fill="#F4EBD0" mask="url(#moonCut)"/>
+    <path d="M0 470 C80 400 150 420 230 380 C320 330 380 400 470 370 C560 340 640 390 800 350 V540 H0Z" fill="#26345A"/>
+    <path d="M0 500 C120 450 210 480 320 455 C430 430 520 470 640 445 C720 430 770 450 800 440 V540 H0Z" fill="#1D2847"/>
+
+    <!-- 車站建築（夜裡亮燈） -->
+    <g transform="translate(400 312) scale(.9)">
+      <g style="filter:brightness(.62)"><use href="#station" width="400" height="230"/></g>
+      <g fill="#FFD58A"><g filter="url(#blur)" opacity=".7"><rect x="80" y="112" width="240" height="70" rx="24"/></g>
+        <path d="M95 172 V124 a24 24 0 0 1 48 0 V172 Z"/><path d="M257 172 V124 a24 24 0 0 1 48 0 V172 Z"/><rect x="189" y="118" width="22" height="34"/></g>
+    </g>
+
+    <!-- 月台 -->
+    <rect x="0" y="492" width="800" height="14" fill="#B9AF9A"/><rect x="0" y="503" width="800" height="3" fill="#9C917C"/><rect x="0" y="506" width="800" height="26" fill="#5E4F3D"/>
+
+    <!-- 站牌（縮小、短柱子） -->
+    <g>
+      <rect x="124" y="448" width="5" height="44" fill="#3A3A3A"/><rect x="235" y="448" width="5" height="44" fill="#3A3A3A"/>
+      <rect x="74" y="372" width="216" height="80" fill="#FFFFFF" stroke="#23211D" stroke-width="2.5"/>
+      <text x="182" y="408" text-anchor="middle" font-family="Oswald,'Arial Narrow',sans-serif" font-size="30" font-weight="600" fill="#23211D">2026.12.25–26</text>
+      <text x="182" y="430" text-anchor="middle" font-family="'Noto Sans TC','PingFang TC',sans-serif" font-size="16" font-weight="900" fill="#23211D">車埕車站舊址</text>
+      <text x="86" y="446" font-family="'Noto Sans TC','PingFang TC',sans-serif" font-size="10" fill="#23211D">← 1966</text>
+      <text x="278" y="446" text-anchor="end" font-family="'Noto Sans TC','PingFang TC',sans-serif" font-size="10" fill="#23211D">鑽石婚號</text>
+    </g>
+
+    <!-- 鐵軌 -->
+    <rect x="0" y="540" width="800" height="40" fill="#141A2A"/>
+    <rect x="0" y="550" width="800" height="14" fill="url(#sleepers)"/>
+    <rect x="0" y="550" width="800" height="3" fill="#8D93A5"/><rect x="0" y="560" width="800" height="3" fill="#8D93A5"/>
+
+    <!-- 列車：車廂在左、車頭在右，由左往右開進站 -->
+    <g id="train">
+      <use href="#car" x="20" y="455" width="486" height="99"/>
+      <g id="wins"></g>
+      <use href="#loco" x="506" y="455" width="180" height="99"/>
+      <g filter="url(#blur)" opacity=".5"><ellipse cx="690" cy="500" rx="40" ry="16" fill="#FFF3C4"/></g>
+    </g>
+  </svg>
+  <div class="count" aria-live="off">
+    <span class="eyebrow">距離發車還有</span>
+    <div class="clock" id="clock" role="timer" aria-label="距離 2026 年 12 月 25 日早上 8 點 30 分發車的倒數">
+      <span class="u"><span class="n" id="cd">---</span><span class="l">天</span></span><span class="sep">:</span>
+      <span class="u"><span class="n" id="ch">--</span><span class="l">時</span></span><span class="sep">:</span>
+      <span class="u"><span class="n" id="cm">--</span><span class="l">分</span></span><span class="sep">:</span>
+      <span class="u"><span class="n" id="cs">--</span><span class="l">秒</span></span>
+    </div>
+  </div>
+  <p class="boarded muted" id="boarded">車窗亮起來＝那位家人已經在月台留言了</p>
+</header>
+
+<main class="wrap">
+
+<section class="invite">
+  <p class="eyebrow">鑽石婚號 · 1966 → 2026</p>
+  <h1>阿公阿嬤結婚 <em>60 年</em>，<br>全家一起回到車埕。</h1>
+  <p>1966 年，阿公阿嬤在車埕結婚，一起坐上同一班車。60 年後，這班車上已經坐滿 15 個人。
+    2026 年 12 月 25、26 日，我們全家回到這裡，陪阿公阿嬤再進站一次。</p>
+</section>
+
+<section class="timetable" aria-labelledby="ttTitle">
+  <h2 id="ttTitle">列車時刻表</h2>
+  <div class="days">
+    <div class="day">
+      <h3>第一天 · 12/25（五）去程<span>DAY 1</span></h3>
+      <ol>
+        <li class="key"><time>08:30</time><span>重慶南路<small>上車：阿公、阿嬤、偉立一家（6 人）</small></span></li>
+        <li class="key"><time>08:45</time><span>泉州街<small>上車：LOLO 一家＋婆婆（5 人）</small></span></li>
+        <li class="key"><time>10:00</time><span>新竹<small>上車：怡婷、翰毅、培元、培典和老婆（5 人）</small></span></li>
+        <li><time>12:15</time><span>集集・午餐<small>到這一站，全員 16 人到齊</small></span></li>
+        <li class="key"><time>16:00</time><span>抵達德川森態旅館<small>入住</small></span></li>
+      </ol>
+    </div>
+    <div class="day">
+      <h3>第二天 · 12/26（六）回程<span>DAY 2</span></h3>
+      <ol>
+        <li><time>10:00</time><span>退房，前往車埕</span></li>
+        <li class="key"><time>12:00</time><span>澄石野老林・午餐<small>12:00–13:30</small></span></li>
+        <li><time>13:30</time><span>從車埕出發回家</span></li>
+        <li><time>15:30</time><span>新竹下車<small>大約時間</small></span></li>
+        <li><time>17:00</time><span>泉州街 → 重慶南路下車<small>大約 17:00–17:30</small></span></li>
+      </ol>
+    </div>
+  </div>
+  <p class="tt-note">本次採包車旅行，由 LOLO 導遊為大家服務。請大家帶著簡易行李、豐富零食、海量酒精以及一顆期待的心情，出去玩囉！</p>
+</section>
+
+<section class="crew" id="crewSec" aria-labelledby="crewTitle" hidden>
+  <span class="stamp">家人限定 · 阿公阿嬤看不到這段</span>
+  <h2 id="crewTitle">秘密問卷是做什麼用的？</h2>
+  <p>你填的那份問卷，會變成鑽石婚宴上「人生列車」遊戲的<b>乘客來信</b>。當天由 LOLO 操作，你們的任務就是提供情緒價值。</p>
+  <ol class="steps">
+    <li><b>紅票出現</b>螢幕上跳出一張乘客來信，上面是某位家人寫的答案，寄件人被票根遮住。</li>
+    <li><b>阿公阿嬤先猜</b>這是誰寫的？孫子給阿公打幾分？先讓他們回答。</li>
+    <li><b>撕開票根</b>揭曉答案，寫的人那一扇車窗會亮起來。</li>
+  </ol>
+  <h2>先偷看三題</h2>
+  <p class="peek-lead">以下是大家的答案，<b>誰寫的先不說</b>，當天由阿公阿嬤來猜。其他題目的答案，保密到當天。</p>
+  <div class="peek" id="peek"><p class="muted">載入中…</p></div>
+  <p class="who">寄件人：？？？　當天撕開票根揭曉</p>
+  <p>沒看到你的答案嗎？你是不是還沒填問卷？趕快去下方領取自己的問卷啊！</p>
+  <ul class="links">
+    <li><a href="https://forms.gle/1SAt6eFcnHRUVtXG7" target="_blank" rel="noopener">三兄妹版<span>→</span></a></li>
+    <li><a href="https://forms.gle/9NRyxTrfQfF8UP8N9" target="_blank" rel="noopener">家庭新乘客版（三兄妹的另一半）<span>→</span></a></li>
+    <li><a href="https://forms.gle/ZeLSwgSwRWT3JgtbA" target="_blank" rel="noopener">孫子輩版<span>→</span></a></li>
+  </ul>
+  <ol class="rules">
+    <li>大約 10～15 分鐘，沒有標 * 的題目可以跳過；越好笑、越真實越好。</li>
+    <li>問卷和答案都<b>不能讓阿公阿嬤知道</b>，各填各的，不用互相討論。</li>
+    <li>下面的月台留言，<b>阿公阿嬤也看得到</b>，問卷答案別寫在那裡喔。</li>
+  </ol>
+  <p class="note">這一段只出現在網址結尾有 <code>#crew</code> 的版本。轉給阿公阿嬤時，請用沒有 #crew 的網址。</p>
+</section>
+
+<section class="platform" aria-labelledby="plTitle">
+  <h2 id="plTitle">月台留言</h2>
+  <p>15 位乘客都在月台上了。<b>點一個人</b>，就能看到他想說的話；喜歡就按個 👍。</p>
+  <p class="hint muted">人很多，可以左右滑動。紅色數字＝那個人說了幾句話。<br>點一下會跟你打招呼；<b>按住往上拉</b>可以把人拎起來甩一甩。<br>手機<b>長按</b>、電腦<b>點兩下</b>就能送愛心 ♥，收到越多愛心的人，頭上飄的愛心越多。</p>
+</section>
+</main>
+
+<div class="strip" id="strip"><div class="people" id="people"></div></div>
+
+<div class="wrap">
+  <form class="compose" id="compose">
+    <label for="who">我是</label>
+    <select id="who" required><option value="">請選擇你是誰</option></select>
+    <label for="text">想說的話</label>
+    <textarea id="text" maxlength="300" placeholder="例如：好期待回車埕！阿公記得穿暖一點。" required></textarea>
+    <div class="sendrow"><span class="status" id="status" role="status"></span><button class="send" id="send" type="submit">說出來</button></div>
+  </form>
+  <footer class="muted">鑽石婚號 · 下一站 2026.12.25 車埕</footer>
+</div>
+
+<script src="chars.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const store={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+
+// ── 家人版：網址結尾 #crew 才顯示問卷說明（沒有就是阿公阿嬤也能看的全家版）──
+const crew=()=>{const on=location.hash==='#crew';$("crewSec").hidden=!on;if(on&&!window.CREW_LOADED)loadPeek()};
+function loadPeek(){ // 答案放在 crew.js，只有家人版才下載，全家版的網頁原始碼裡沒有答案
+  window.CREW_LOADED=1;const sc=document.createElement('script');sc.src='crew.js';
+  sc.onload=()=>{const box=$('peek');box.replaceChildren();
+    for(const it of window.CREW||[]){const sec=document.createElement('section');
+      const h=document.createElement('h3');h.textContent=it.q;sec.append(h);
+      if(it.note){const p=document.createElement('p');p.className='intro';p.textContent=it.note;sec.append(p)}
+      const ul=document.createElement('ul');for(const a of it.a){const li=document.createElement('li');li.textContent=a;ul.append(li)}
+      sec.append(ul);box.append(sec)}};
+  sc.onerror=()=>{$('peek').textContent='搶先看暫時載入不了，等一下再重新整理看看。'};
+  document.head.append(sc);
+}
+crew();addEventListener('hashchange',crew);
+
+// ── 倒數：2026-12-25 08:30 台灣時間（重慶南路上車）──
+const TARGET=new Date('2026-12-25T08:30:00+08:00').getTime(); // 第一班上車：08:30 重慶南路
+const p2=n=>String(n).padStart(2,'0');
+function tick(){
+  let s=Math.max(0,Math.floor((TARGET-Date.now())/1000));
+  if(!s){$('clock').innerHTML='<span class="n">列車到站！</span>';return}
+  $('cd').textContent=Math.floor(s/86400);$('ch').textContent=p2(Math.floor(s%86400/3600));$('cm').textContent=p2(Math.floor(s%3600/60));$('cs').textContent=p2(s%60);
+  setTimeout(tick,1000-Date.now()%1000);
+}
+tick();
+
+// ── 星星（固定種子，每次位置一樣）──
+{let r=7,h='';const rnd=()=>(r=r*16807%2147483647)/2147483647;for(let i=0;i<70;i++)h+=`<circle cx="${(rnd()*800).toFixed(1)}" cy="${(172+rnd()*210).toFixed(1)}" r="${(rnd()*1.4+.4).toFixed(1)}" opacity="${(rnd()*.6+.3).toFixed(2)}"/>`;$('stars').innerHTML=h}
+
+// ── 人物（2026 年的模樣，造型規則與遊戲網站相同）──
+const BLK='#2E2420';
+const BORN={dad:1939,mom:1944,yt:1968,wl:1970,lolo:1975,py:1997,pd:1999,jk:2002,jd:2004,zc:2008,zj:2010},MATE={hy:'yt',mz:'lolo',sj:'wl',pdw:'pd'};
+const HOUSE={dad:'dad',mom:'mom',yt:'yt',hy:'yt',py:'yt',pd:'yt',pdw:'yt',wl:'wl',sj:'wl',zc:'wl',zj:'wl',lolo:'lolo',mz:'lolo',jk:'lolo',jd:'lolo'};
+const TOP={dad:'#3E5F96',mom:'#8E2A3A',yt:'#A97FC4',hy:'#7E5E9E',py:'#CDB0E0',pd:'#9A74BC',pdw:'#E3C8EE',wl:'#2F93B8',sj:'#7CC6DD',zc:'#1F6F8F',zj:'#9ED8EA',lolo:'#8DB33A',mz:'#6A8F2A',jk:'#C3DB6E',jd:'#A2C24E'};
+const HAIRS={dad:'side',mom:'curly',yt:'long',hy:'side',py:'short',pd:'side',pdw:'bun',wl:'short',sj:'bob',zc:'side',zj:'short',lolo:'ponytail',mz:'side',jk:'short',jd:'side'};
+const FEM=new Set(['mom','yt','pdw','sj','lolo']),JOB={py:'stetho',pd:'wafer',jk:'palette',jd:'laptop',zc:'helmet',zj:'basketball'};
+function LOOK(id,y){
+  const age=y-(BORN[id]??BORN[MATE[id]]),st=age<=3?'toddler':age<=11?'child':age<=17?'teen':age<60?'adult':'elder',G='#5E6270',fem=FEM.has(id);
+  let hc=BLK,brow;
+  if(id==='dad')hc='#C9C6C0';
+  if(id==='mom'){hc='#C29A72';brow='#9A7452'} // 阿嬤：染過的淺棕色捲髮
+  const sp={stage:st,hair:HAIRS[id],hairColor:hc,brow,topColor:TOP[id],bottomColor:G,acc:[]};
+  if(st==='teen')Object.assign(sp,{top:'tee',sleeve:'short',bottom:'pants',bottomColor:'#4E6A8C'});
+  else if(st==='elder')Object.assign(sp,{top:fem?'cardigan':'sweater',bottom:'pants'});
+  else Object.assign(sp,{top:id==='pdw'?'dress':fem?'blouse':'shirt',sleeve:fem?'short':'long',bottom:id==='pdw'?'dress':id==='sj'?'skirt':'pants',bottomColor:id==='sj'?'#3E5A6E':G,belt:!fem});
+  if(id==='dad'||id==='hy')sp.acc.push('glasses');
+  if(JOB[id])sp.prop=JOB[id];
+  return sp}
+const PU='#8A62A8',CY='#1F7FA3',GR='#6E9228';
+// 月台排法：怡婷家｜阿公阿嬤｜偉立家｜LOLO 家；seat＝車窗編號（依上車順序，同遊戲）
+const CAST=[['pdw','培典老婆',PU,15],['pd','培典',PU,8],['py','培元',PU,7],['hy','翰毅',PU,6],['yt','怡婷',PU,3],
+  ['dad','阿公','#2B4A7E',1],['mom','阿嬤','#8E2A3A',2],
+  ['wl','偉立',CY,4],['sj','淑娟',CY,12],['zc','兆宸',CY,13],['zj','兆鈞',CY,14],
+  ['lolo','LOLO',GR,5],['mz','名璋',GR,9],['jk','敬凱',GR,10],['jd','敬達',GR,11]];
+
+const people=$('people'),who=$('who');
+for(const [k,name,color] of CAST){
+  const d=document.createElement('div');d.className='person';d.dataset.name=name;
+  d.innerHTML=`<div class="bubbles" id="b-${k}"></div>
+    <button class="who-btn" type="button" aria-expanded="false" aria-controls="b-${k}"><svg viewBox="0 0 120 214" aria-hidden="true">${fig(LOOK(k,2026))}</svg><span class="tag" style="background:${color}">${name}</span><span class="loves"></span></button>`;
+  const btn=d.querySelector('.who-btn');
+  btn.onclick=e=>{if(btn.dataset.dragged){delete btn.dataset.dragged;return}if(e.detail>1)return;toggle(name);gesture(btn.querySelector('svg'))}; // 雙擊的第二下不算
+  btn.ondblclick=()=>love(d,name,1,5);
+  btn.oncontextmenu=e=>e.preventDefault();
+  btn.addEventListener('pointerdown',e=>grab(e,btn));
+  people.append(d);
+  who.add(new Option(name,name));
+}
+who.value=store.get('me','');
+// 一進頁面先把阿公阿嬤滑到中間
+requestAnimationFrame(()=>{const g=people.children[5];$('strip').scrollLeft=g.offsetLeft+g.offsetWidth-$('strip').clientWidth/2});
+
+// ── 留言資料 ──
+const API='https://script.google.com/macros/s/AKfycbzRXEWi4FRmvAq46eGDrqyT4PByr5u7Z15e2V6AHLMZJLLvYAGZTU35iN-oqA5WPf-K/exec';
+let ready=false,demo=[],msgs=[],openName=null,showAll=false,liked=store.get('liked',{}),HEARTS={},heartsReady=false,pending={};
+async function call(body){
+  if(!ready&&body){ // 後端還沒更新：試玩模式，絕不寫進舊版（只給家人看的）留言板
+    if(body.action==='post')demo.push({id:'d'+Date.now(),time:new Date().toISOString(),name:body.name,text:body.text,reactions:{'👍':0}});
+    if(body.action==='react'){const m=demo.find(m=>m.id===body.id);if(m)m.reactions['👍']++}
+    return demo;
+  }
+  const r=await fetch(body?API:API+'?board=platform',body?{method:'POST',body:JSON.stringify({board:'platform',...body})}:{});
+  if(!r.ok)throw new Error('連線失敗（'+r.status+'）');
+  const j=await r.json();if(!j.ok)throw new Error(j.error||'送不出去');
+  if(j.board!=='platform'){ready=false;return demo}
+  ready=true;if(j.hearts){HEARTS=j.hearts;heartsReady=true;showLoves()}return j.messages;
+}
+
+const fmt=new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
+function render(){
+  const by={};for(const m of msgs)(by[m.name]??=[]).push(m);
+  // 車窗：留過言的人那一格亮
+  let w='';
+  for(const [k,name,,seat] of CAST)if(by[name]){const x=20+(30+32*(seat-1))*.9,y=455+38*.9;
+    w+=`<g filter="url(#blur)" fill="#FFB547" opacity=".8"><rect x="${x-6}" y="${y-6}" width="35" height="34" rx="8"/></g><rect x="${x}" y="${y}" width="23.4" height="21.6" rx="2" fill="#FFD58A"/>`}
+  $('wins').innerHTML=w;
+  const n=Object.keys(by).length;
+  $('boarded').innerHTML=n?`已經有 <b>${n}</b> / 15 位家人在月台留言，車窗一扇扇亮起來了`:'車窗亮起來＝那位家人已經在月台留言了';
+
+  for(const d of people.children){
+    const name=d.dataset.name,list=by[name]||[],open=name===openName;
+    d.classList.toggle('open',open);d.querySelector('.who-btn').setAttribute('aria-expanded',open);
+    d.querySelector('.who-btn').setAttribute('aria-label',`${name}，${list.length?`說了 ${list.length} 句話`:'還沒說話'}，點一下${open?'收起來':'看留言'}`);
+    let b=d.querySelector('.badge');
+    if(list.length){if(!b){b=document.createElement('span');b.className='badge';b.setAttribute('aria-hidden','true');d.append(b)}b.textContent=list.length}else b?.remove();
+    const box=d.querySelector('.bubbles');box.replaceChildren();
+    if(!open)continue;
+    if(!list.length){const e=document.createElement('div');e.className='empty';e.textContent=`${name}還沒說話，換你先說一句？`;box.append(e);continue}
+    const shown=showAll?list:list.slice(-2); // 先露最新 2 則，其餘按展開
+    if(list.length>shown.length){const more=document.createElement('button');more.type='button';more.className='more';more.textContent=`還有 ${list.length-shown.length} 句，展開`;more.onclick=()=>{showAll=true;render()};box.append(more)}
+    for(const m of shown){ // 舊的在上，最新的離頭最近
+      const bu=document.createElement('div');bu.className='bubble';
+      const p=document.createElement('p');p.textContent=m.text;
+      const meta=document.createElement('div');meta.className='meta';
+      const t=document.createElement('time');const dt=new Date(m.time);t.textContent=isNaN(dt)?'':fmt.format(dt);
+      const lk=document.createElement('button');lk.type='button';lk.className='like';
+      const c=m.reactions?.['👍']||0,done=!!liked[m.id];
+      lk.textContent='👍'+(c?' '+c:'');lk.setAttribute('aria-pressed',done);lk.setAttribute('aria-label',`按讚，目前 ${c} 個${done?'，你按過了':''}`);lk.disabled=done;
+      lk.onclick=()=>like(m.id,lk);
+      meta.append(t,lk);bu.append(p,meta);box.append(bu);
+    }
+  }
+  fit();
+}
+function fit(){ // 泡泡太多時讓月台長高，不要被切掉
+  const box=document.querySelector('.person.open .bubbles'),need=box?box.offsetHeight+document.querySelector('.person.open').offsetHeight+60:0;
+  people.style.height=need>400?need+'px':'';
+}
+function toggle(name){openName=openName===name?null:name;showAll=false;render()}
+function say(t,err){$('status').textContent=t;$('status').className='status'+(err?' err':'')}
+
+async function load(){try{msgs=await call();render();if(!ready)say('試玩模式：留言還不會存起來')}catch(e){say('月台留言暫時連不上，等一下再重新整理看看',true)}}
+async function like(id,btn){
+  btn.disabled=true;
+  try{const list=await call({action:'react',id,emoji:'👍'});liked[id]=1;store.set('liked',liked);msgs=list;render()}
+  catch(e){btn.disabled=false;say(e.message,true)}
+}
+$('compose').addEventListener('submit',async ev=>{
+  ev.preventDefault();
+  const name=who.value,text=$('text').value.trim();
+  if(!name){say('先選你是誰喔',true);who.focus();return}
+  if(!text){say('想說的話還沒寫',true);$('text').focus();return}
+  $('send').disabled=true;say('送出中…');
+  try{msgs=await call({action:'post',name,text});store.set('me',name);$('text').value='';openName=name;showAll=false;render();
+    const d=[...people.children].find(d=>d.dataset.name===name);d.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+    say(ready?'說出來了！看看你頭上的泡泡':'說出來了！（試玩模式，重新整理就會消失）')}
+  catch(e){say(e.message+'，再按一次試試',true)}
+  finally{$('send').disabled=false}
+});
+load();
+setInterval(()=>{if(ready&&!document.hidden)load()},20000); // 每 20 秒看看有沒有新留言
+
+// ── 人偶動態：點一下＝招手／擺頭／跳一下；按住拖曳＝拎起來甩 ──
+const calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function gesture(svg){
+  if(calm)return;
+  svg.getAnimations({subtree:true}).forEach(a=>a.cancel()); // 連點時先停掉上一個動作
+  const arm=svg.querySelector('.arm'),heads=svg.querySelectorAll('.hf,.hb'),opt={duration:1200,easing:'ease-in-out'};
+  const kinds=[()=>heads.forEach(h=>h.animate([{transform:'none'},{transform:'rotate(-14deg)'},{transform:'rotate(12deg)'},{transform:'rotate(-8deg)'},{transform:'none'}],opt)), // 擺頭
+    ()=>svg.animate([{transform:'none'},{transform:'translateY(-18px)',offset:.35,easing:'ease-in'},{transform:'scale(1.06,.92)',offset:.6},{transform:'none'}],{duration:650})]; // 跳一下
+  if(arm)kinds.push(()=>{arm.animate([{transform:'none'},{transform:'rotate(118deg)',offset:.2},{transform:'rotate(95deg)',offset:.35},{transform:'rotate(118deg)',offset:.5},{transform:'rotate(95deg)',offset:.65},{transform:'rotate(118deg)',offset:.8},{transform:'none'}],{duration:1500,easing:'ease-in-out'});
+    heads.forEach(h=>h.animate([{transform:'none'},{transform:'rotate(-8deg)',offset:.2},{transform:'rotate(-8deg)',offset:.8},{transform:'none'}],{duration:1500}))}); // 招手（頭也微微歪）
+  pick(kinds)();
+}
+function grab(e,btn){
+  if(e.button>0)return;
+  const svg=btn.querySelector('svg'),x0=e.clientX,y0=e.clientY,touch=e.pointerType!=='mouse';
+  let held=null,raf=0,px=x0,py=y0,lx=x0,vx=0,ang=0,av=0,ox=0,oy=0,home=null,loving=null;
+  const d=btn.closest('.person'),press=touch?setTimeout(()=>{btn.dataset.dragged=1;let n=0;love(d,d.dataset.name,1,2);loving=setInterval(()=>{if(++n<30)love(d,d.dataset.name,1,1)},200)},450):0; // 手機長按＝一直冒愛心
+  const start=()=>{ // 真的拎起來：複製一份浮在畫面最上層，原本位置留空
+    home=svg.getBoundingClientRect();ox=x0-home.left;oy=y0-home.top;
+    held=svg.cloneNode(true);held.classList.add('held');held.style.left=home.left+'px';held.style.top=home.top+'px';held.style.transformOrigin=`${ox}px ${oy}px`;
+    document.body.append(held);svg.classList.add('ghost');btn.dataset.dragged=1;
+    const loop=()=>{vx=vx*.8+(px-lx)*.2;lx=px; // 拎著的點在上面，身體往反方向甩
+      if(calm)ang=0;else{av+=(Math.max(-70,Math.min(70,vx*4))-ang)*.08;av*=.9;ang+=av}
+      held.style.transform=`translate(${px-x0}px,${py-y0}px) rotate(${ang}deg)`;raf=requestAnimationFrame(loop)};loop();
+  };
+  const move=ev=>{px=ev.clientX;py=ev.clientY;
+    if(loving)return ev.preventDefault();
+    if(!held){const dx=px-x0,dy=py-y0;if(Math.hypot(dx,dy)<8)return;clearTimeout(press);if(touch&&Math.abs(dx)>Math.abs(dy))return end();start()}
+    ev.preventDefault()};
+  const end=()=>{removeEventListener('pointermove',move);removeEventListener('pointerup',end);removeEventListener('pointercancel',end);
+    clearTimeout(press);if(loving){clearInterval(loving);loving=null;setTimeout(()=>delete btn.dataset.dragged)}
+    if(!held)return;cancelAnimationFrame(raf);setTimeout(()=>delete btn.dataset.dragged); // 放手後緊接的那次 click 不算點擊
+    const from=held.style.transform,el=held;held=null;
+    const done=()=>{el.remove();svg.classList.remove('ghost')};
+    if(calm){done();return}
+    // 放手：回到月台上自己的位置，落地彈一下
+    el.animate([{transform:from},{transform:`translate(0,0) rotate(${-ang*.3}deg)`,offset:.55,easing:'ease-in'},{transform:'translate(0,-14px) rotate(4deg)',offset:.75},{transform:'translate(0,0) scale(1.05,.94)',offset:.9},{transform:'none'}],{duration:700,fill:'forwards'}).finished.then(done,done);
+  };
+  addEventListener('pointermove',move,{passive:false});addEventListener('pointerup',end);addEventListener('pointercancel',end);
+}
+
+// ── 愛心：長按／雙擊送出；收到越多，頭上平常飄的愛心越多 ──
+function heart(d,size){
+  const h=document.createElement('span');h.className='heart';h.textContent='♥';h.setAttribute('aria-hidden','true');
+  const dx=(Math.random()-.5)*50,rise=70+Math.random()*60,sz=size||16+Math.random()*12;h.style.fontSize=sz+'px';d.append(h);
+  if(calm){setTimeout(()=>h.remove(),600);return}
+  h.animate([{transform:`translate(-50%,0) scale(.4)`,opacity:0},{transform:`translate(calc(-50% + ${dx*.4}px),-${rise*.3}px) scale(1)`,opacity:1,offset:.25},
+    {transform:`translate(calc(-50% + ${dx}px),-${rise}px) scale(.9) rotate(${dx/3}deg)`,opacity:0}],{duration:1400+Math.random()*500,easing:'ease-out'}).finished.then(()=>h.remove(),()=>h.remove());
+}
+const total=name=>(HEARTS[name]||0)+(pending[name]||0);
+function showLoves(){
+  for(const d of people.children){const n=total(d.dataset.name);d.querySelector('.loves').textContent=n?'♥ '+n:'';
+    d.querySelector('.who-btn').dataset.loves=n}
+}
+let sendTimer=0;
+function love(d,name,n,burst){ // n＝算幾顆，burst＝畫面上冒幾顆
+  for(let i=0;i<burst;i++)setTimeout(()=>heart(d),i*90);
+  pending[name]=(pending[name]||0)+n;showLoves();
+  clearTimeout(sendTimer);sendTimer=setTimeout(flush,1200); // 停手 1.2 秒後一次送出
+}
+async function flush(){
+  if(!heartsReady)return; // 後端還沒更新：愛心只留在這支手機上
+  const batch=pending;pending={};
+  for(const [name,n] of Object.entries(batch))for(let left=n;left>0;left-=30){
+    try{const r=await fetch(API,{method:'POST',body:JSON.stringify({board:'platform',action:'heart',name,n:Math.min(30,left)})});const j=await r.json();if(j.ok&&j.hearts)HEARTS=j.hearts;else throw 0}
+    catch{pending[name]=(pending[name]||0)+Math.min(30,left)} // 沒送成功就留著下次一起送
+  }
+  showLoves();
+}
+// 關掉網頁或切到背景時，把還沒送的愛心送出去（keepalive：頁面關了也會送完）
+addEventListener('visibilitychange',()=>{if(document.visibilityState!=='hidden'||!heartsReady)return;
+  for(const [name,n] of Object.entries(pending))for(let left=n;left>0;left-=30)fetch(API,{method:'POST',keepalive:true,body:JSON.stringify({board:'platform',action:'heart',name,n:Math.min(30,left)})});
+  pending={};clearTimeout(sendTimer)});
+// 平常：依照收到的愛心多寡，頭上不定時飄出小愛心（最多的人飄最多）
+setInterval(()=>{
+  if(calm||document.hidden)return;
+  const ns=[...people.children].map(d=>total(d.dataset.name)),max=Math.max(...ns);if(!max)return;
+  [...people.children].forEach((d,i)=>{const n=ns[i];if(!n)return;const lv=1+Math.floor(4*n/max); // 1～5 級
+    if(Math.random()<lv/6)heart(d,10+lv*2)});
+},900);
+
+// 月台人偶第一次出現：從阿公阿嬤開始往兩邊，一個個跳上月台；落地後阿公阿嬤打招呼
+function arrive(){
+    const list=[...people.children],mid=5.5;
+    list.forEach((d,i)=>{const b=d.querySelector('.who-btn'),delay=Math.abs(i-mid)*90;
+      b.animate([{transform:'translateY(-120px)',opacity:0},{transform:'translateY(0)',opacity:1,offset:.55,easing:'ease-in'},{transform:'translateY(-16px) scale(1,1.03)',offset:.75,easing:'ease-out'},{transform:'translateY(0) scale(1.06,.94)',offset:.9},{transform:'none',opacity:1}],{duration:750,delay,fill:'backwards'})});
+    setTimeout(()=>[5,6].forEach(i=>gesture(list[i].querySelector('svg'))),Math.abs(0-mid)*90+800);
+}
+if(!calm&&'IntersectionObserver' in window){
+  const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){io.disconnect();arrive()}},{rootMargin:'0px 0px 120px 0px'}); // 還沒捲到就先開始，避免先看到人偶又消失
+  io.observe($('strip'));
+}
+
+// 列車進站（進到畫面時才開進來）
+requestAnimationFrame(()=>requestAnimationFrame(()=>$('train').classList.add('in')));
+</script>
+</body>
+</html>
