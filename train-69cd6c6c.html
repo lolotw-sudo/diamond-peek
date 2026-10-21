@@ -1,0 +1,659 @@
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow"><!-- 含問卷真實答案：不要從任何頁面連過來 -->
+<title>人生列車</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Noto+Serif+TC:wght@400;900&family=Oswald:wght@500;600&display=swap">
+<style>
+:root{--bg:#0A0E1A;--ink:#E8E4DA;--muted:#8D93A5;--accent:#FFD58A;
+  --serif:"Noto Serif TC","Songti TC",serif;--sans:"Noto Sans TC","PingFang TC",sans-serif;--cond:"Oswald","Arial Narrow",sans-serif;color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);margin:0;padding:12px 16px;box-sizing:border-box;display:grid;grid-template-rows:1fr auto;gap:10px;place-items:center}
+.stage{position:relative;width:min(100%,calc((100vh - 90px)*16/9));aspect-ratio:16/9;max-width:100%;container-type:inline-size;overflow:hidden;border-radius:6px;cursor:pointer;user-select:none}
+.stage:fullscreen{width:100%;border-radius:0;background:#000}
+.stage>svg{display:block;width:100%;height:100%}
+.s-serif{font-family:var(--serif)}.s-sans{font-family:var(--sans)}.s-cond{font-family:var(--cond)}
+
+/* 三種時段 */
+.stage{--sky1:#A3D2EA;--sky2:#F4ECDA;--stars:0;--sun:#F6C667;--mtn1:#A7C4AE;--mtn2:#86AB90;--ground:#CDBF9F;--ballast:#7A6E60;--bright:1;--glow:0;--lit:0;--sink:#1E2A44;--sub:#4F5A70}
+.stage[data-mode="dusk"]{--sky1:#3F3D72;--sky2:#F2A76A;--stars:.3;--sun:#F7B267;--mtn1:#6E5C80;--mtn2:#574B6E;--ground:#6A5A62;--ballast:#4E4248;--bright:.8;--glow:.7;--lit:.85;--sink:#FFF6E6;--sub:#F6DCC4}
+.stage[data-mode="night"]{--sky1:#0B1733;--sky2:#2B3D68;--stars:1;--sun:#F4EBD0;--mtn1:#26345A;--mtn2:#1D2847;--ground:#1B2238;--ballast:#2A2A33;--bright:.5;--glow:1;--lit:1;--sink:#F4EAD2;--sub:#AAB5D0}
+.stage svg *{transition:fill 1.2s,stop-color 1.2s,opacity 1.2s,filter 1.2s}
+.tint{filter:brightness(var(--bright))}
+.ptint{filter:brightness(calc(.45 + var(--bright)*.55))} /* 人物夜裡不要太暗，電視上才看得清 */
+.moving .far{animation:scroll 9s linear infinite}
+.moving .near{animation:scroll 5s linear infinite}
+.moving .sleep{animation:sleep .25s linear infinite}
+@keyframes scroll{to{transform:translateX(-1200px)}}
+@keyframes sleep{to{transform:translateX(-36px)}}
+#caption{transition:opacity .5s}
+.fresh{animation:board 1s both}
+@keyframes board{0%{opacity:0}40%{opacity:1}55%{opacity:.4}100%{opacity:1}}
+
+/* 疊加層：封面與車票 */
+.overlay{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,10,24,.6);transition:opacity .5s}
+.overlay.off{opacity:0;pointer-events:none}
+.cover{text-align:center;color:#F4EAD2}
+.cover h1{font-family:var(--serif);font-weight:900;font-size:9cqw;margin:0;letter-spacing:.08em}
+.cover p{margin:.6em 0 0;font-size:2.2cqw;color:#D8CFBC}
+.cover .go{margin-top:2.4em;font-family:var(--cond);font-size:1.6cqw;letter-spacing:.3em;color:var(--accent)}
+.ticket{width:72cqw;height:auto;filter:drop-shadow(0 1.2cqw 2cqw rgba(0,0,0,.45))}
+.ticket [hidden]{display:none}
+#stubQ,#stubA{transition:opacity .6s}
+.torn #stubQ{opacity:0}.torn #stubA{opacity:1}
+#stubA{opacity:0}
+.torn #stub{animation:tear .7s ease-out}
+@keyframes tear{30%{transform:translate(14px,-6px) rotate(4deg)}100%{transform:none}}
+
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;font-size:14px;color:var(--muted)}
+.bar button{font:inherit;color:var(--ink);background:#1B2133;border:1px solid #2E364D;border-radius:999px;padding:5px 14px;cursor:pointer}
+.bar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.bar select{font:inherit;color:var(--ink);background:#1B2133;border:1px solid #2E364D;border-radius:999px;padding:4px 10px;max-width:16em}
+.bar kbd{font-family:var(--cond);background:#1B2133;border:1px solid #2E364D;border-radius:4px;padding:0 6px;color:var(--ink)}
+#prog{font-family:var(--cond);letter-spacing:.1em;min-width:4.5em;text-align:center}
+/* 互動遊戲：秘密乘客調查（票根封面 → 題目 → 人頭剪影揭曉） */
+#gameTicket{width:72cqw;filter:drop-shadow(0 1.2cqw 2cqw rgba(0,0,0,.45))}
+#gStub{transform-box:fill-box;transform-origin:0 100%;transition:transform .8s cubic-bezier(.5,0,.8,.4),opacity .8s}
+.torn #gStub{transform:translate(40px,120px) rotate(28deg);opacity:0}
+.blink{animation:blink 1.6s ease-in-out infinite}@keyframes blink{50%{opacity:.35}}
+#ovQuiz{place-items:stretch;background:linear-gradient(#0B1733,#2B3D68)}
+#quiz{position:relative;display:grid;grid-template-rows:auto 1fr auto;padding:2.2cqw 3cqw 1.6cqw;gap:1.2cqw;color:#F4EAD2;min-height:0}
+#qbar{display:flex;align-items:baseline;gap:1.6cqw;background:#1D3F7A;border-radius:.6cqw;padding:1cqw 2cqw;box-shadow:0 .4cqw 0 #12294F}
+#qid{font-family:var(--cond);font-weight:600;font-size:2.6cqw;color:var(--accent);letter-spacing:.1em}
+#qtext{font-family:var(--serif);font-weight:900;font-size:3.4cqw;letter-spacing:.06em}
+#qbody{display:flex;flex-direction:column;justify-content:center;min-height:0}
+#qrows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;justify-content:center;gap:var(--gap,1.4cqw);min-height:0}
+#qrows li{display:grid;grid-template-columns:1fr calc(var(--n,3)*(var(--hs) + .6cqw));align-items:center;gap:2cqw;animation:qslide .5s both}
+@keyframes qslide{from{opacity:0;transform:translateX(-4cqw)}}
+.ans{background:#F4EAD2;color:#3A1F1A;border-left:.8cqw solid #B3261E;border-radius:.4cqw;padding:.7cqw 1.6cqw;font-weight:900;font-size:var(--fs);line-height:1.35}
+.who{display:flex;gap:.6cqw}
+.who button{all:unset;cursor:pointer;position:relative;width:var(--hs);aspect-ratio:13/11;border-radius:.6cqw;background:#ffffff10;display:grid;place-items:center}
+.who button:focus-visible{outline:.25cqw solid var(--accent)}
+.who svg{width:100%;height:100%}
+.who .face{opacity:0;transition:opacity .5s}.who .shadow{transition:opacity .5s}
+.who .on .face{opacity:1}.who .on .shadow{opacity:0}
+.who .q{position:absolute;font-family:var(--cond);font-size:calc(var(--hs)*.34);color:#C9D2EA;top:28%;transition:opacity .3s}.who .on .q{opacity:0}
+.who .tg{position:absolute;bottom:-.4cqw;left:50%;transform:translate(-50%,40%) scale(.6);opacity:0;white-space:nowrap;font-size:calc(var(--hs)*.24);font-weight:700;color:#fff;border:.12cqw solid #fff;border-radius:99px;padding:.05cqw .7cqw;transition:.35s}
+.who .on .tg{opacity:1;transform:translate(-50%,40%)}
+#qcap{min-height:2.6cqw;text-align:center;font-size:1.9cqw;color:var(--accent)}#qcap b{color:#fff}
+.hero{display:flex;align-items:flex-end;gap:2.5cqw;padding-left:2cqw;height:100%}
+.hero svg{height:min(100%,36cqw);animation:qslide .6s both}
+.heroName{font-family:var(--serif);font-weight:900;font-size:10cqw;letter-spacing:.12em;color:#F4EAD2;align-self:center;text-shadow:0 .5cqw 0 #B3261E;animation:qpop .5s .4s both}
+.hero.still svg,.hero.still .heroName{animation:none} /* 新角色那頁：主角不重播進場 */
+.cameo{position:absolute;right:3cqw;bottom:1.5cqw;display:flex;flex-direction:column;align-items:flex-end;animation:qjump .9s cubic-bezier(.3,1.4,.5,1) both}
+.cameo svg{height:20cqw;margin-right:4cqw;filter:drop-shadow(0 0 .5cqw #9FB4E8)}
+.ctag{margin:-.4cqw 2cqw 0 0;background:#B3261E;color:#fff;font-weight:900;font-size:1.7cqw;border:.15cqw solid #fff;border-radius:99px;padding:.15cqw 1.2cqw}
+.cbubble{position:relative;width:29cqw;margin-bottom:1.4cqw;background:#F4EAD2;color:#3A1F1A;border-radius:1.6cqw;padding:1.4cqw 2cqw;font-size:2.4cqw;font-weight:700;line-height:1.5;box-shadow:0 .6cqw 1.4cqw rgba(0,0,0,.35);animation:qpop .45s 1s both}
+.cbubble::after{content:"";position:absolute;top:100%;right:8cqw;border:1.2cqw solid transparent;border-top-color:#F4EAD2}
+@keyframes qjump{from{transform:translate(30cqw,25cqw) rotate(25deg);opacity:0}60%{opacity:1}}
+@keyframes qpop{from{opacity:0;transform:translateY(1cqw) scale(.9)}}
+/* 人偶動作：招手（左手臂繞肩膀轉）、搖頭（頭繞脖子轉）、嬰兒上下跳 */
+.wave .arm{animation:wave 2.6s ease-in-out 1.2s infinite}
+.shake .arm{animation:wave 2.2s ease-in-out .6s infinite}
+.shake .hb,.shake .hf{animation:shake 2.2s ease-in-out .6s infinite}
+.bounce .ptint>*{animation:bounce .9s ease-in-out 1.2s infinite}
+@keyframes wave{0%,80%,100%{transform:none}14%,38%,62%{transform:rotate(118deg)}26%,50%{transform:rotate(96deg)}72%{transform:rotate(108deg)}} /* 手舉到肩膀高度往外揮；超過約 125 度手會跑到大頭後面 */
+@keyframes shake{0%,70%,100%{transform:none}10%,30%,50%{transform:rotate(-9deg)}20%,40%,60%{transform:rotate(9deg)}}
+@keyframes bounce{0%,100%{transform:none}50%{transform:translateY(-12px)}}
+@media (prefers-reduced-motion:reduce){.stage svg *,.overlay,#caption{transition:none}.moving .far,.moving .near,.moving .sleep,.torn #stub,.fresh,.blink,#qrows li,.hero svg,.heroName,.cameo,.cbubble,.wave .arm,.shake .arm,.shake .hb,.shake .hf,.bounce .ptint>*{animation:none}#gStub{transition:none}}
+</style>
+
+<div class="stage" id="stage" data-mode="day" role="region" aria-label="人生列車簡報畫面，點一下或按右鍵前進">
+<svg viewBox="0 0 1200 675" aria-hidden="true">
+<defs>
+  <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--sky1)"/><stop offset="1" style="stop-color:var(--sky2)"/></linearGradient>
+  <filter id="blur" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="9"/></filter>
+  <pattern id="tiles" width="11" height="12" patternUnits="userSpaceOnUse"><rect width="11" height="12" fill="#B8693F"/><line x1=".5" y1="0" x2=".5" y2="12" stroke="#94522F" stroke-width="1.2"/></pattern>
+  <pattern id="sleepers" width="18" height="14" patternUnits="userSpaceOnUse"><rect width="18" height="14" fill="#5B5046"/><rect x="2" width="9" height="14" fill="#3E352D"/></pattern>
+
+  <symbol id="station" viewBox="0 0 400 230">
+    <rect x="246" y="16" width="16" height="16" fill="#7A4A2E"/>
+    <polygon points="14,80 48,30 352,30 386,80" fill="url(#tiles)"/>
+    <rect x="10" y="78" width="380" height="6" fill="#6E4128"/>
+    <rect x="60" y="84" width="280" height="116" fill="#EFE3C8"/>
+    <rect x="60" y="178" width="280" height="22" fill="#DDCBA6"/>
+    <rect x="28" y="84" width="8" height="116" fill="#B3261E"/><rect x="364" y="84" width="8" height="116" fill="#B3261E"/>
+    <path d="M36 86 L60 106 M364 86 L340 106" stroke="#B3261E" stroke-width="4"/>
+    <g stroke="#B3261E" stroke-width="5"><path d="M92 172 V124 a27 27 0 0 1 54 0 V172 Z" fill="#8E2A22"/><path d="M254 172 V124 a27 27 0 0 1 54 0 V172 Z" fill="#8E2A22"/></g>
+    <path d="M95 124 a24 24 0 0 1 48 0 Z" fill="#4E8A8C"/><path d="M257 124 a24 24 0 0 1 48 0 Z" fill="#4E8A8C"/>
+    <path d="M119 126 V172 M281 126 V172" stroke="#B3261E" stroke-width="3"/>
+    <rect x="176" y="102" width="48" height="8" fill="#6E4128"/>
+    <rect x="182" y="110" width="36" height="90" fill="#C0302A"/><rect x="189" y="118" width="22" height="34" fill="#2F3C44"/>
+    <rect x="104" y="182" width="14" height="18" fill="#4A4A4A"/>
+    <rect x="264" y="170" width="58" height="4" fill="#5A3E2B"/><rect x="262" y="180" width="62" height="5" fill="#5A3E2B"/>
+    <path d="M268 185 V200 M318 185 V200" stroke="#3A2A1E" stroke-width="3"/>
+  </symbol>
+
+  <symbol id="loco" viewBox="0 0 200 110">
+    <rect x="72" y="8" width="58" height="26" rx="3" style="fill:var(--blue,#1D3F7A)"/>
+    <rect x="80" y="14" width="18" height="12" rx="2" style="fill:var(--glass,#A9C1DE)"/><rect x="104" y="14" width="18" height="12" rx="2" style="fill:var(--glass,#A9C1DE)"/>
+    <rect x="8" y="32" width="184" height="56" rx="4" style="fill:var(--blue,#1D3F7A)"/>
+    <path d="M22 42 V60 M30 42 V60 M38 42 V60 M46 42 V60 M154 42 V60 M162 42 V60 M170 42 V60 M178 42 V60" style="stroke:var(--line2,#163262)" stroke-width="2"/>
+    <rect x="8" y="68" width="184" height="5" style="fill:var(--stripe,#E8B83A)"/>
+    <rect x="18" y="88" width="164" height="10" style="fill:var(--under,#24262B)"/>
+    <g style="fill:var(--under,#24262B)"><circle cx="40" cy="99" r="9"/><circle cx="64" cy="99" r="9"/><circle cx="136" cy="99" r="9"/><circle cx="160" cy="99" r="9"/></g>
+  </symbol>
+
+  <symbol id="car" viewBox="0 0 540 110">
+    <rect x="4" y="16" width="532" height="12" rx="6" fill="#737B88"/>
+    <g fill="#5E6571"><rect x="60" y="10" width="40" height="8" rx="2"/><rect x="250" y="10" width="40" height="8" rx="2"/><rect x="440" y="10" width="40" height="8" rx="2"/></g>
+    <rect x="4" y="26" width="532" height="62" style="fill:var(--blue,#1D3F7A)"/>
+    <rect x="8" y="32" width="14" height="52" rx="2" style="fill:var(--line2,#163262)"/><rect x="518" y="32" width="14" height="52" rx="2" style="fill:var(--line2,#163262)"/>
+    <g style="fill:var(--glass,#A9C1DE)"><rect x="30" y="38" width="26" height="24" rx="3"/><rect x="62" y="38" width="26" height="24" rx="3"/><rect x="94" y="38" width="26" height="24" rx="3"/><rect x="126" y="38" width="26" height="24" rx="3"/><rect x="158" y="38" width="26" height="24" rx="3"/><rect x="190" y="38" width="26" height="24" rx="3"/><rect x="222" y="38" width="26" height="24" rx="3"/><rect x="254" y="38" width="26" height="24" rx="3"/><rect x="286" y="38" width="26" height="24" rx="3"/><rect x="318" y="38" width="26" height="24" rx="3"/><rect x="350" y="38" width="26" height="24" rx="3"/><rect x="382" y="38" width="26" height="24" rx="3"/><rect x="414" y="38" width="26" height="24" rx="3"/><rect x="446" y="38" width="26" height="24" rx="3"/><rect x="478" y="38" width="26" height="24" rx="3"/></g>
+    <rect x="4" y="72" width="532" height="3" fill="#F2F0EA"/><rect x="4" y="78" width="532" height="2" fill="#F2F0EA"/>
+    <rect x="30" y="88" width="480" height="8" fill="#24262B"/>
+    <g fill="#24262B"><circle cx="60" cy="99" r="9"/><circle cx="86" cy="99" r="9"/><circle cx="454" cy="99" r="9"/><circle cx="480" cy="99" r="9"/></g>
+  </symbol>
+
+  <symbol id="short" viewBox="0 0 220 110">
+    <rect x="4" y="16" width="212" height="12" rx="6" fill="#737B88"/>
+    <rect x="4" y="26" width="212" height="62" style="fill:var(--blue,#1D3F7A)"/>
+    <rect x="8" y="32" width="14" height="52" rx="2" style="fill:var(--line2,#163262)"/><rect x="198" y="32" width="14" height="52" rx="2" style="fill:var(--line2,#163262)"/>
+    <g style="fill:var(--glass,#A9C1DE)"><rect x="30" y="38" width="26" height="24" rx="3"/><rect x="62" y="38" width="26" height="24" rx="3"/><rect x="94" y="38" width="26" height="24" rx="3"/><rect x="126" y="38" width="26" height="24" rx="3"/><rect x="158" y="38" width="26" height="24" rx="3"/></g>
+    <rect x="4" y="72" width="212" height="3" fill="#F2F0EA"/><rect x="4" y="78" width="212" height="2" fill="#F2F0EA"/>
+    <rect x="30" y="88" width="160" height="8" fill="#24262B"/>
+    <g fill="#24262B"><circle cx="50" cy="99" r="9"/><circle cx="76" cy="99" r="9"/><circle cx="144" cy="99" r="9"/><circle cx="170" cy="99" r="9"/></g>
+  </symbol>
+
+  <mask id="tmask" maskUnits="userSpaceOnUse" x="0" y="0" width="760" height="250">
+    <rect width="760" height="250" fill="#fff"/>
+    <g fill="#000"><circle cx="0" cy="125" r="22"/><circle cx="760" cy="125" r="22"/><circle cx="522" cy="125" r="16"/>
+    <circle cx="540" cy="6" r="3"/><circle cx="540" cy="22" r="3"/><circle cx="540" cy="38" r="3"/><circle cx="540" cy="54" r="3"/><circle cx="540" cy="70" r="3"/><circle cx="540" cy="86" r="3"/><circle cx="540" cy="102" r="3"/><circle cx="540" cy="148" r="3"/><circle cx="540" cy="164" r="3"/><circle cx="540" cy="180" r="3"/><circle cx="540" cy="196" r="3"/><circle cx="540" cy="212" r="3"/><circle cx="540" cy="228" r="3"/><circle cx="540" cy="244" r="3"/></g>
+  </mask>
+</defs>
+
+<rect width="1200" height="675" fill="url(#sky)"/>
+<g fill="#F4EBD0" style="opacity:var(--stars)"><circle cx="70" cy="50" r="1.6"/><circle cx="180" cy="230" r="1.2"/><circle cx="300" cy="36" r="1.6"/><circle cx="440" cy="250" r="1.2"/><circle cx="560" cy="60" r="1.8"/><circle cx="700" cy="200" r="1.2"/><circle cx="820" cy="80" r="1.6"/><circle cx="930" cy="240" r="1.2"/><circle cx="1150" cy="220" r="1.6"/><circle cx="640" cy="270" r="1.2"/><circle cx="880" cy="30" r="1.2"/><circle cx="1010" cy="170" r="1.4"/></g>
+<circle cx="1070" cy="100" r="38" style="fill:var(--sun)"/>
+<g class="far"><path id="farP" d="M0 400 L120 330 L230 380 L360 300 L480 370 L600 320 L740 385 L860 310 L1000 375 L1100 335 L1200 400 V675 H0Z" style="fill:var(--mtn1)"/></g>
+<g class="near"><path id="nearP" d="M0 450 Q150 410 300 440 T600 440 T900 440 T1200 450 V675 H0Z" style="fill:var(--mtn2)"/></g>
+<rect x="0" y="498" width="1200" height="177" style="fill:var(--ground)"/>
+
+<!-- 車站（會滑進滑出） -->
+<g id="stnMove">
+  <g id="stns"></g><!-- 車站（由程式產生，可並排兩站） -->
+</g>
+
+<!-- 軌道 -->
+<g class="sleep"><rect x="0" y="548" width="1240" height="14" fill="url(#sleepers)"/></g>
+<rect x="0" y="562" width="1200" height="113" style="fill:var(--ballast)"/>
+<rect x="0" y="544" width="1200" height="5" fill="#8A8F98"/>
+
+<!-- 列車（由程式產生） -->
+<g id="train"></g>
+<g id="plat"></g><!-- 月台上的人物（由程式產生；畫在列車前面） -->
+
+<!-- 文字 -->
+<g id="caption">
+  <text id="cYear" x="56" y="82" class="s-cond" font-size="24" letter-spacing="4" style="fill:var(--sub)"></text>
+  <text id="cTitle" x="56" y="144" class="s-serif" font-size="54" font-weight="900" style="fill:var(--sink)"></text>
+  <text id="cSub" x="56" y="192" class="s-serif" font-size="25" style="fill:var(--sub)"></text>
+</g>
+</svg>
+
+<!-- 封面 -->
+<div class="overlay" id="ovCover">
+  <div class="cover">
+    <h1>人生列車</h1>
+    <p>爸爸媽媽的六十年　1967 — 2027</p>
+    <div class="go">按 → 或點一下出發</div>
+  </div>
+</div>
+
+<!-- 藍票：同一班車 -->
+<div class="overlay off" id="ovBlue">
+<svg class="ticket" viewBox="0 0 760 250" role="img" aria-label="紀念車票：車埕到花壇，同一班車，1967">
+  <g mask="url(#tmask)">
+    <rect width="760" height="250" rx="4" fill="#1D3F7A"/>
+    <rect x="0" y="22" width="540" height="206" fill="#F4EAD2"/>
+    <use href="#loco" x="150" y="62" width="280" height="154" opacity=".13"/>
+  </g>
+  <text x="30" y="60" class="s-cond" font-size="22" font-weight="600" fill="#1D3F7A">No. 1967-0002</text>
+  <text x="500" y="60" class="s-sans" font-size="21" font-weight="900" fill="#1D3F7A" text-anchor="end">車埕 ─ 花壇</text>
+  <text x="270" y="162" class="s-sans" font-size="86" font-weight="900" fill="none" stroke="#1D3F7A" stroke-width="3" text-anchor="middle" letter-spacing="6">同一班車</text>
+  <g class="s-sans" font-size="15" font-weight="700" fill="#1D3F7A"><text x="54" y="208">日期 1967</text><text x="164" y="208">車次 鑽石婚號</text><text x="304" y="208">乘客 2 人</text><text x="404" y="208">有效 60 年</text></g>
+  <text x="650" y="62" class="s-sans" font-size="24" font-weight="900" fill="#F4EAD2" text-anchor="middle">車埕 → 2027</text>
+  <text x="650" y="92" class="s-sans" font-size="14" fill="#F4EAD2" text-anchor="middle">1967 上車　座位 1・2</text>
+  <use href="#loco" x="600" y="104" width="100" height="55" style="--blue:#F4EAD2;--glass:#1D3F7A;--line2:#1D3F7A;--stripe:#1D3F7A;--under:#F4EAD2"/>
+  <text x="650" y="196" class="s-cond" font-size="17" fill="#F4EAD2" text-anchor="middle">No. 1967-0002</text>
+</svg>
+</div>
+
+<!-- 互動遊戲：秘密乘客調查（⚠️ 含問卷真實答案：本檔不可放進 peek-family／peek-publish，不可推上 GitHub） -->
+<div class="overlay off" id="ovGame">
+<svg id="gameTicket" viewBox="0 0 760 250" role="img" aria-label="秘密乘客調查車票，撕開票根開始">
+  <rect width="540" height="250" rx="4" fill="#B3261E"/><rect y="22" width="540" height="206" fill="#F4EAD2"/>
+  <text x="30" y="60" class="s-cond" font-size="22" font-weight="600" fill="#B3261E">人生列車 · 乘客來信</text>
+  <text id="gStop" x="510" y="60" class="s-sans" font-size="18" font-weight="700" fill="#B3261E" text-anchor="end"></text>
+  <text x="270" y="152" class="s-serif" font-size="64" font-weight="900" fill="#3A1F1A" text-anchor="middle" letter-spacing="6">秘密乘客調查</text>
+  <text x="270" y="204" class="s-sans" font-size="17" font-weight="700" fill="#B3261E" text-anchor="middle">爸爸媽媽先猜，再揭曉是誰寫的</text>
+  <line x1="540" y1="8" x2="540" y2="242" stroke="#F4EAD2" stroke-width="3" stroke-dasharray="6 7"/>
+  <g id="gStub"><rect x="543" width="217" height="250" rx="4" fill="#B3261E"/>
+    <text x="651" y="70" class="s-sans" font-size="22" font-weight="900" fill="#F4EAD2" text-anchor="middle">票根</text>
+    <text x="651" y="140" class="s-cond" font-size="52" font-weight="600" fill="#FFD58A" text-anchor="middle">START</text>
+    <text class="s-sans blink" x="651" y="196" font-size="17" fill="#F4EAD2" text-anchor="middle">→ 撕開票根開始</text></g>
+</svg>
+</div>
+<div class="overlay off" id="ovQuiz"><div id="quiz">
+  <div id="qbar"><span id="qid"></span><span id="qtext"></span></div>
+  <div id="qbody"></div>
+  <div id="qcap" aria-live="polite"></div>
+</div></div>
+
+<!-- 紅票：乘客來信（範例資料） -->
+<div class="overlay off" id="ovRed">
+<svg class="ticket" id="redTicket" viewBox="0 0 760 250" role="img" aria-label="乘客來信範例：爸爸最常講的一句話「有那麼嚴重嗎？」">
+  <g mask="url(#tmask)">
+    <rect width="540" height="250" fill="#B3261E"/>
+    <rect x="0" y="22" width="540" height="206" fill="#F4EAD2"/>
+    <use href="#car" x="30" y="70" width="480" height="98" opacity=".09" style="--blue:#B3261E"/>
+    <g id="stub"><rect x="540" width="220" height="250" fill="#B3261E"/></g>
+  </g>
+  <text x="30" y="60" class="s-cond" font-size="22" font-weight="600" fill="#B3261E">乘客來信 No. 07（範例）</text>
+  <text x="500" y="60" class="s-sans" font-size="18" font-weight="700" fill="#B3261E" text-anchor="end">A01 爸爸最常講的一句話</text>
+  <text x="270" y="150" class="s-serif" font-size="54" font-weight="900" fill="#3A1F1A" text-anchor="middle">「有那麼嚴重嗎？」</text>
+  <text x="54" y="208" class="s-sans" font-size="15" font-weight="700" fill="#B3261E">通常出現在：全家出門，有人說他指錯路的時候</text>
+  <text x="650" y="66" class="s-sans" font-size="22" font-weight="900" fill="#F4EAD2" text-anchor="middle">寄件乘客</text>
+  <g id="stubQ"><text x="650" y="136" class="s-cond" font-size="58" font-weight="600" fill="#F4EAD2" text-anchor="middle">? ? ?</text>
+    <text x="650" y="178" class="s-sans" font-size="16" fill="#F4EAD2" text-anchor="middle">爸媽先猜是誰寫的</text></g>
+  <g id="stubA"><text x="650" y="138" class="s-sans" font-size="46" font-weight="900" fill="#FFD58A" text-anchor="middle">老三</text>
+    <text x="650" y="178" class="s-sans" font-size="16" fill="#F4EAD2" text-anchor="middle">（範例答案）</text></g>
+  <text x="650" y="212" class="s-sans" font-size="13" fill="#F4EAD2" text-anchor="middle" opacity=".75">→ 撕開票根揭曉</text>
+</svg>
+</div>
+</div>
+
+<div class="bar">
+  <button type="button" id="bPrev">← 上一步</button>
+  <span id="prog">1 / 14</span>
+  <label>跳到 <select id="jump"></select></label>
+  <button type="button" id="bNext">下一步 →</button>
+  <span>鍵盤 <kbd>←</kbd> <kbd>→</kbd> 或空白鍵　<kbd>F</kbd> 全螢幕</span>
+</div>
+
+<script src="chars.js?v=3"></script><!-- 改 chars.js 時把 v 加 1，避免瀏覽器用到舊版 -->
+<script>
+// ── 腳本：每一步的畫面。key 相同＝同一站，不轉場；key 改變＝轉場並切換時段 ──
+const ST={
+  chechang:{name:'車埕',roman:'CHECHENG',prev:'← 水里'},
+  huatan:{name:'花壇',roman:'HUATAN',prev:'← 彰化'},
+  letter:{name:'乘客來信',roman:'LETTERS',prev:'← 2025'}
+};
+const Y1967={name:'1967',roman:'車埕 · 結婚',prev:'← 1966',next:'1968 →'};
+// 人物造型（Q 版紙娃娃，畫法在 chars.js）；新生兒包巾＝該房家族色
+const BLK='#2E2420';
+const PEOPLE={
+  dadBaby:{stage:'baby',wrap:'#DCE4F0'},
+  dad57:{stage:'adult',hair:'side',hairColor:BLK,top:'shirt',topColor:'#F7F4EC',sleeve:'short',bottom:'pants',bottomColor:'#9A8766',belt:1,prop:'suitcase'},
+  mom58:{stage:'teen',hair:'bob',hairColor:BLK,top:'sailor',topColor:'#FFFFFF',bottom:'skirt',bottomColor:'#2F3E5C',prop:'suitcase'},
+  momBaby:{stage:'baby',wrap:'#F2D6DA'},
+  dad66:{stage:'adult',hair:'side',hairColor:BLK,top:'shirt',topColor:'#F7F4EC',sleeve:'short',bottom:'pants',bottomColor:'#9A8766',belt:1},
+  mom66:{stage:'adult',hair:'long',hairColor:BLK,top:'dress',topColor:'#C96A78',sleeve:'short',bottom:'dress',shoe:'#8C5A4A'},
+  groom:{stage:'adult',hair:'side',hairColor:BLK,top:'suit',topColor:'#2B2F3A',tie:'#9E2B25',bottom:'pants',bottomColor:'#2B2F3A',acc:['corsage']},
+  bride:{stage:'adult',hair:'bun',hairColor:BLK,top:'bodice',topColor:'#FBF8F1',bottom:'gown',bottomColor:'#FBF8F1',acc:['veil','bouquet','pearl']},
+  dad70:{stage:'adult',hair:'side',hairColor:BLK,top:'shirt',topColor:'#5B7FB8',bottom:'pants',bottomColor:'#8C7B5E',belt:1},
+  dad75:{stage:'adult',hair:'side',hairColor:BLK,top:'shirt',topColor:'#5B7FB8',bottom:'pants',bottomColor:'#8C7B5E',belt:1,prop:'key'},
+  mom70:{stage:'adult',hair:'long',hairColor:BLK,top:'dress',topColor:'#B4505F',sleeve:'short',bottom:'dress',shoe:'#8C5A4A'},
+  ytBaby:{stage:'baby',wrap:'#E3D0EE'},
+  dad97:{stage:'adult',hair:'side',hairColor:'#6A645E',top:'shirt',topColor:'#3E5F96',bottom:'pants',bottomColor:'#5E6270',belt:1,acc:['glasses']},
+  mom97:{stage:'adult',hair:'curly',hairColor:'#4A3528',top:'blouse',topColor:'#8E2A3A',bottom:'pants',bottomColor:'#5E6270'},
+  yt97:{stage:'adult',hair:'long',hairColor:BLK,top:'blouse',topColor:'#A97FC4',bottom:'pants',bottomColor:'#5E6270'},
+  hy97:{stage:'adult',hair:'side',hairColor:BLK,top:'shirt',topColor:'#7E5E9E',bottom:'pants',bottomColor:'#9A8766',belt:1},
+  wl97:{stage:'adult',hair:'short',hairColor:BLK,top:'shirt',topColor:'#2F93B8',sleeve:'short',bottom:'pants',bottomColor:'#4E6A8C'},
+  lolo97:{stage:'adult',hair:'ponytail',hairColor:BLK,top:'tee',topColor:'#8DB33A',sleeve:'short',bottom:'pants',bottomColor:'#4E6A8C'},
+  pyBaby:{stage:'baby',wrap:'#E3D0EE'},
+  dad94:{stage:'adult',hair:'side',hairColor:'#4A4440',top:'suit',topColor:'#2B4A7E',tie:'#9E2B25',bottom:'pants',bottomColor:'#2B4A7E',acc:['corsage']},
+  mom94:{stage:'adult',hair:'curly',hairColor:'#3A2C24',top:'dress',topColor:'#8E2A3A',sleeve:'short',bottom:'dress',shoe:'#5A2A2A'},
+  yt94:{stage:'adult',hair:'bun',hairColor:BLK,top:'bodice',topColor:'#FBF8F1',bottom:'gown',bottomColor:'#FBF8F1',acc:['veil','bouquet','pearl']},
+  hy94:{stage:'adult',hair:'side',hairColor:BLK,top:'suit',topColor:'#2B2F3A',tie:'#A97FC4',bottom:'pants',bottomColor:'#2B2F3A',acc:['corsage']},
+  wl94:{stage:'adult',hair:'short',hairColor:BLK,top:'shirt',topColor:'#2F93B8',bottom:'pants',bottomColor:'#5E6270',belt:1},
+  lolo94:{stage:'adult',hair:'ponytail',hairColor:BLK,top:'blouse',topColor:'#8DB33A',bottom:'skirt',bottomColor:'#5E6270'},
+  yt70:{stage:'toddler',hair:'bob',hairColor:BLK,top:'dress',topColor:'#CDB0E0',sleeve:'short',bottom:'dress',shoe:'#D9473A'},
+  yt75:{stage:'child',hair:'bob',hairColor:BLK,top:'dress',topColor:'#A97FC4',sleeve:'short',bottom:'dress',acc:['bow'],shoe:'#D9473A'},
+  wl75:{stage:'child',hair:'short',hairColor:BLK,top:'tee',topColor:'#7CC6DD',sleeve:'short',bottom:'shorts',bottomColor:'#9A7454',prop:'teddy',shoe:'#5B7FA6'},
+  wlBaby:{stage:'baby',wrap:'#CFE8F2'},
+  loloBaby:{stage:'baby',wrap:'#E3EEC2'}
+};
+// ── 依年份自動算年紀、換造型（1999 以後的站都用這個）：代號＠年份，例如 'dad@2010'、'lolo@2001!bride'
+const BORN={dad:1939,mom:1944,yt:1968,wl:1970,lolo:1975,py:1997,pd:1999,jk:2002,jd:2004,zc:2008,zj:2010},MATE={hy:'yt',mz:'lolo',sj:'wl',pdw:'pd'}; // 配偶生年不明，先當作同年
+const HOUSE={dad:'dad',mom:'mom',yt:'yt',hy:'yt',py:'yt',pd:'yt',pdw:'yt',wl:'wl',sj:'wl',zc:'wl',zj:'wl',lolo:'lolo',mz:'lolo',jk:'lolo',jd:'lolo'};
+const WRAP={yt:'#E3D0EE',wl:'#CFE8F2',lolo:'#E3EEC2'},TIE={yt:'#A97FC4',wl:'#2F93B8',lolo:'#8DB33A'};
+const TOP={dad:'#3E5F96',mom:'#8E2A3A',yt:'#A97FC4',hy:'#7E5E9E',py:'#CDB0E0',pd:'#9A74BC',pdw:'#E3C8EE',wl:'#2F93B8',sj:'#7CC6DD',zc:'#1F6F8F',zj:'#9ED8EA',lolo:'#8DB33A',mz:'#6A8F2A',jk:'#C3DB6E',jd:'#A2C24E'};
+const HAIRS={dad:'side',mom:'curly',yt:'long',hy:'side',py:'short',pd:'side',pdw:'bun',wl:'short',sj:'bob',zc:'side',zj:'short',lolo:'ponytail',mz:'side',jk:'short',jd:'side'};
+const FEM=new Set(['mom','yt','pdw','sj','lolo']),JOB={py:'stetho',pd:'wafer',jk:'palette',jd:'laptop',zc:'helmet',zj:'basketball'};
+function LOOK(id,y,opt){
+  const age=y-(BORN[id]??BORN[MATE[id]]),st=age<1?'baby':age<=3?'toddler':age<=11?'child':age<=17?'teen':age<60?'adult':'elder',G='#5E6270',fem=FEM.has(id);
+  if(st==='baby')return{stage:'baby',wrap:WRAP[HOUSE[id]]};
+  let hc=BLK,brow;
+  if(id==='dad')hc=age<50?BLK:age<58?'#4A4440':age<66?'#6A645E':age<75?'#8A847E':'#C9C6C0';
+  if(id==='mom'){hc=age<60?'#4A3528':'#C29A72';if(age>=60)brow='#9A7452'} // 阿嬤：染過的淺棕色捲髮
+  const sp={stage:st,hair:HAIRS[id],hairColor:hc,brow,topColor:TOP[id],bottomColor:G,acc:[]};
+  if(st==='toddler'||st==='child')Object.assign(sp,{top:'tee',sleeve:'short',bottom:'shorts',bottomColor:'#9A7454',shoe:'#5B7FA6'});
+  else if(st==='teen')Object.assign(sp,{top:'tee',sleeve:'short',bottom:'pants',bottomColor:'#4E6A8C'});
+  else if(st==='elder')Object.assign(sp,{top:fem?'cardigan':'sweater',bottom:'pants'});
+  else Object.assign(sp,{top:id==='pdw'?'dress':fem?'blouse':'shirt',sleeve:fem?'short':'long',bottom:id==='pdw'?'dress':id==='sj'?'skirt':'pants',bottomColor:id==='sj'?'#3E5A6E':G,belt:!fem});
+  if(id==='dad'&&age>=58||id==='hy'&&y>=2010)sp.acc.push('glasses');
+  if(JOB[id]&&y>=2025)sp.prop=JOB[id]; // 孫子輩的職業／興趣道具
+  if(opt==='bride')Object.assign(sp,{hair:'bun',top:'bodice',topColor:'#FBF8F1',bottom:'gown',bottomColor:'#FBF8F1',acc:['veil','bouquet','pearl'],prop:undefined});
+  if(opt==='groom')Object.assign(sp,{hair:'side',top:'suit',topColor:'#2B2F3A',tie:TIE[HOUSE[id]],bottom:'pants',bottomColor:'#2B2F3A',acc:['corsage'],prop:undefined});
+  return sp}
+const SPEC=k=>PEOPLE[k]||(([id,y,o])=>LOOK(id,+y,o))(k.split(/[@!]/));
+const C=(y,...a)=>a.map(it=>Array.isArray(it)?[`${it[0].replace(/^(\w+)/,`$1@${y}`)}`,0,null,null,'pop']:[it.replace(/^(\w+)/,`$1@${y}`),0]); // 人多的站：依序排在列車前方的長月台
+const G2=(y,b,f)=>{const m=it=>{const [k,pop]=Array.isArray(it)?[it[0],1]:[it];return[k.replace(/^(\w+)/,`$1@${y}`),pop]};return{back:b.map(m),front:f.map(m)}};
+const R=n=>Array.from({length:n},(_,i)=>i+1);
+// on＝亮著的座位（1 爸 2 媽 3 怡婷 4 偉立 5 LOLO）；plat＝月台上的人 [造型, x, 走去的車門 x]；board＝這一步是「上車」
+const STEPS=[
+  {key:'cover',train:'none',ov:'ovCover'},
+  // 開場：車埕、花壇兩站並排 → 兩人出生 → 長大 → 各自的列車進站、上車
+  {key:'start',st:[ST.chechang,null],train:'pair',trains:{},on:[],plat:[['dadBaby',225]],year:'1939 · 車埕',title:'爸爸出生了。',sub:'集集線的最後一站，一個鐵路人家的孩子。'},
+  {key:'start',st:[ST.chechang,ST.huatan],enter:1,plat:[['dadBaby',225],['momBaby',672]],year:'1944 · 花壇',title:'媽媽出生了。',sub:'縱貫線上的小站，也是一個鐵路人家。'},
+  {key:'start',grow:1,plat:[['dad57',225],['mom58',672]],year:'1957 · 1958',title:'兩個人都長大了。',sub:'爸爸 18 歲、媽媽 14 歲，準備離開家鄉。'},
+  {key:'start',arrive:'dad',trains:{dad:1},on:[1],plat:[['mom58',672]],boarders:[['dad57',225,276]],year:'1957 · 車埕',title:'爸爸搭上北上的列車。',sub:'18 歲，提著皮箱往臺北去。'},
+  {key:'start',arrive:'mom',trains:{dad:1,mom:1},on:[1,2],plat:[],boarders:[['mom58',672,726]],year:'1958 · 花壇',title:'媽媽也北上了。',sub:'14 歲，兩列車各自開往臺北。'},
+  {key:'north',train:'apart',on:[1,2],year:'1957 · 1958',title:'兩個人，先後北上。',sub:'各自搭著自己的車，還不認識彼此。'},
+  {key:'1966',st:{name:'臺北',roman:'TAIPEI',prev:'← 1958',next:'1967 →'},train:'meet',alight:1,on:[],plat:[['dad66',215,446],['mom66',405,826,446]],year:'1966 · 臺北',title:'兩條路線，在臺北交會。',sub:'兩個人一前一後下了車，在月台上等著。'},
+  {key:'1966',board:1,approach:{dad66:285,mom66:335},train:'together',on:[1,2],sub:'兩個人走近彼此，一起坐上了藍色的火車。'},
+  {key:'1967',st:Y1967,train:'one',alight:1,on:[],plat:[['bride',335,514],['groom',400,514]],year:'1967 · 車埕',title:'兩個人，結婚了。',sub:'回到爸爸出生的車埕，穿著禮服一起下車。'},
+  {key:'1967',board:1,on:[1,2],title:'兩個人，搭上同一班車。',sub:'車廂裡亮著 2 盞燈，還有 13 個座位在等人。'},
+  {key:'1967',ov:'ovBlue'},
+  {key:'1968',st:{name:'1968',roman:'怡婷上車',prev:'← 1967',next:'1970 →'},train:'one',alight:1,on:[],plat:[['dad70',320],['ytBaby',372,514,null,'pop'],['mom70',425]],year:'1968 · 新乘客',title:'第一位新乘客：怡婷。',sub:'爸爸媽媽下車，迎接第一個孩子。'},
+  {key:'1968',board:1,on:[1,2,3],tag:{seat:3,name:'怡婷'},title:'老大怡婷上車了。',sub:'車上從 2 個人，變成 3 個人。'},
+  {key:'1970',st:{name:'1970',roman:'偉立上車',prev:'← 1968',next:'1975 →'},train:'one',alight:1,on:[],plat:[['dad70',300],['mom70',412],['yt70',248],['wlBaby',356,514,null,'pop']],year:'1970 · 新乘客',title:'第二位新乘客：偉立。',sub:'怡婷 2 歲，這一年當上了姐姐。'},
+  {key:'1970',board:1,on:[1,2,3,4],tag:{seat:4,name:'偉立'},title:'老二偉立上車了。',sub:'車上 4 個人了。'},
+  {key:'1975',st:{name:'1975',roman:'LOLO 上車',prev:'← 1970',next:'1994 →'},train:'one',alight:1,on:[],plat:[['dad75',285],['mom70',392],['yt75',230],['wl75',448],['loloBaby',338,514,null,'pop']],year:'1975 · 新乘客',title:'第三位新乘客：LOLO。',sub:'姐姐 7 歲、哥哥 5 歲。'},
+  {key:'1975',board:1,on:[1,2,3,4,5],tag:{seat:5,name:'LOLO'},title:'老三 LOLO 上車了。',sub:'一家五口到齊。'},
+  // ── 互動遊戲第一站：三兄妹的童年（一頁一題；點人頭剪影揭曉是誰寫的） ──
+  {key:'1975',ov:'ovGame',stop:'第一站 · 三兄妹的童年'},
+  {key:'1975',ov:'ovQuiz',q:'B01'},
+  {key:'1975',ov:'ovQuiz',q:'B02'},
+  {key:'1975',ov:'ovQuiz',q:'B03'},
+  {key:'1975',ov:'ovQuiz',q:'B08'},
+  {key:'1975',ov:'ovQuiz',q:'B08',cameo:1},
+  // 1994：怡婷結婚，第一位新家人翰毅上車（座位 6）
+  {key:'1994',st:{name:'1994',roman:'翰毅上車',prev:'← 1975',next:'1997 →'},train:'one',alight:1,on:[],plat:[['dad94',255],['mom94',420],['wl94',200],['lolo94',475],['yt94',310,514,null,'pop'],['hy94',365,514,null,'pop']],year:'1994 · 新家人',title:'第一位新家人：翰毅。',sub:'爸媽、偉立、LOLO 先下車，姐姐和姐夫一起出現。'},
+  {key:'1994',board:1,on:[1,2,3,4,5,6],tag:{seat:6,name:'翰毅'},title:'姐夫翰毅上車了。',sub:'車上 6 個人了。'},
+  // 1997：第一位孫子培元出生（怡婷家，座位 7）；全家 6 人下車，寶寶出現在怡婷與翰毅中間
+  {key:'1997',st:{name:'1997',roman:'培元上車',prev:'← 1994',next:'1999 →'},train:'one',alight:1,on:[],plat:G2(1997,['dad','mom','wl','lolo'],['yt',['py'],'hy']),year:'1997 · 新乘客',title:'第一位孫子：培元。',sub:'全家下車，迎接怡婷和翰毅的第一個孩子。'},
+  {key:'1997',board:1,on:[1,2,3,4,5,6,7],tag:{seat:7,name:'培元'},title:'培元上車了。',sub:'爸爸媽媽當上了阿公阿嬤。車上 7 個人了。'},
+  // 1999 → 2025：人多了，大家站到列車前方的長月台，從自己的窗下車、回自己的窗上車
+  {key:'1999',st:{name:'1999',roman:'培典上車',prev:'← 1997',next:'2001 →'},train:'one',alight:1,on:[],plat:G2(1999,['dad','mom','wl','lolo'],['yt','py',['pd'],'hy']),year:'1999 · 新乘客',title:'第二位孫子：培典。',sub:'培元 2 歲，當上了哥哥。爸爸也 60 歲了。'},
+  {key:'1999',board:1,on:R(8),tag:{seat:8,name:'培典'},title:'培典上車了。',sub:'車上 8 個人了。'},
+  {key:'2001',st:{name:'2001',roman:'名璋上車',prev:'← 1999',next:'2002 →'},train:'one',alight:1,on:[],plat:G2(2001,['dad','mom','wl','yt','hy','py','pd'],[['lolo!bride'],['mz!groom']]),year:'2001 · 新家人',title:'新家人：名璋。',sub:'大家先下車，LOLO 和名璋一起出現在前方月台。'},
+  {key:'2001',board:1,on:R(9),tag:{seat:9,name:'名璋'},title:'名璋上車了。',sub:'車上 9 個人了。'},
+  {key:'2002',st:{name:'2002',roman:'敬凱上車',prev:'← 2001',next:'2004 →'},train:'one',alight:1,on:[],plat:G2(2002,['dad','mom','wl','yt','hy','py','pd'],['lolo',['jk'],'mz']),year:'2002 · 新乘客',title:'新乘客：敬凱。',sub:'LOLO 和名璋的第一個孩子。'},
+  {key:'2002',board:1,on:R(10),tag:{seat:10,name:'敬凱'},title:'敬凱上車了。',sub:'車上 10 個人了。'},
+  {key:'2004',st:{name:'2004',roman:'敬達上車',prev:'← 2002',next:'2008 →'},train:'one',alight:1,on:[],plat:G2(2004,['dad','mom','wl','yt','hy','py','pd'],['lolo','jk',['jd'],'mz']),year:'2004 · 新乘客',title:'新乘客：敬達。',sub:'敬凱 2 歲，當上了哥哥。媽媽也 60 歲了。'},
+  {key:'2004',board:1,on:R(11),tag:{seat:11,name:'敬達'},title:'敬達上車了。',sub:'車上 11 個人了。'},
+  {key:'2008',st:{name:'2008',roman:'淑娟、兆宸上車',prev:'← 2004',next:'2010 →'},train:'one',alight:1,on:[],plat:G2(2008,['dad','mom','yt','hy','py','pd','lolo','mz','jk','jd'],['wl',['zc'],['sj']]),year:'2008 · 新家人',title:'新家人：淑娟和兆宸。',sub:'偉立結婚了，淑娟和兆宸同一年加入。'},
+  {key:'2008',board:1,on:R(13),tag:[{seat:12,name:'淑娟'},{seat:13,name:'兆宸'}],title:'淑娟和兆宸上車了。',sub:'車上 13 個人了。'},
+  {key:'2010',st:{name:'2010',roman:'兆鈞上車',prev:'← 2008',next:'2025 →'},train:'one',alight:1,on:[],plat:G2(2010,['dad','mom','yt','hy','py','pd','lolo','mz','jk','jd'],['wl','zc',['zj'],'sj']),year:'2010 · 新乘客',title:'新乘客：兆鈞。',sub:'兆宸 2 歲，當上了哥哥。'},
+  {key:'2010',board:1,on:R(14),tag:{seat:14,name:'兆鈞'},title:'兆鈞上車了。',sub:'車上 14 個人了。'},
+  // ── 互動遊戲第二站：孫子輩到齊之後。爸爸的經典台詞、新乘客（女婿）的觀察、孫子輩的爆料 ──
+  {key:'2010',ov:'ovGame',stop:'第二站 · 大家眼中的阿公阿嬤'},
+  {key:'2010',ov:'ovQuiz',q:'A01'},
+  {key:'2010',ov:'ovQuiz',q:'A02'},
+  {key:'2010',ov:'ovQuiz',q:'C01'},
+  {key:'2010',ov:'ovQuiz',q:'C02a'},
+  {key:'2010',ov:'ovQuiz',q:'C02b'},
+  {key:'2010',ov:'ovQuiz',q:'C03'},
+  {key:'2010',ov:'ovQuiz',q:'C04'},
+  {key:'2010',ov:'ovQuiz',q:'D05'},
+  {key:'2010',ov:'ovQuiz',q:'D06'},
+  {key:'2025',st:{name:'2025',roman:'培典老婆上車',prev:'← 2010',next:'2027 →'},train:'one',alight:1,on:[],plat:G2(2025,['dad','mom','wl','sj','zc','zj','lolo','mz','jk','jd'],['yt','py',['pd!groom'],['pdw!bride'],'hy']),year:'2025 · 新家人',title:'最後一位乘客：培典老婆。',sub:'培典結婚了。'},
+  {key:'2025',board:1,on:R(15),tag:{seat:15,name:'培典老婆'},title:'全員到齊。',sub:'15 扇窗，全部亮了。'},
+  {key:'letter',st:ST.letter,train:'one',on:R(15),year:'互動站 · 範例',title:'第一封乘客來信',sub:'爸媽先猜，再撕開票根揭曉。'},
+  {key:'letter',ov:'ovRed'},
+  {key:'letter',ov:'ovRed',torn:true},
+  {key:'end',train:'one',on:R(15),year:'下一站 · 2027',title:'鑽石婚，60 週年。',sub:'15 扇窗全亮，列車開往 2027。'}
+];
+// 每次轉場輪流：白天 → 傍晚 → 夜晚
+const MODES=['day','dusk','night'];
+let m=0;STEPS.forEach((s,i)=>{const p=STEPS[i-1];
+  if(i&&s.key!==p.key)m++;s.mode=MODES[m%3];
+  if(p&&s.key===p.key)for(const k of ['st','train','trains','on','year','title','sub'])if(s[k]===undefined)s[k]=p[k]; // 同一站沿用（月台人物不沿用）
+  s.on=s.on||[];
+  s.tags=+s.key>=1968; // 名牌從 1968 怡婷出生那站開始（之前只有爸媽，不需要）
+  if(s.board||s.arrive)s.fresh=s.on.filter(x=>!p.on.includes(x)); // 這一步新亮的窗
+});
+// 介紹新成員的站一律白天（LOLO：新成員出現在夜裡顯得黯淡、不吉利）；開往這些站的路上先入夜，進站時天亮
+const NEWBIE=new Set(STEPS.filter(s=>s.tag).map(s=>s.key));
+STEPS.forEach(s=>{if(NEWBIE.has(s.key))s.mode='day'});
+const NEWNAMES={};STEPS.forEach(s=>{if(s.tag)NEWNAMES[s.key]=[].concat(s.tag).map(t=>t.name)});
+
+const $=id=>document.getElementById(id);
+const stage=$('stage'),train=$('train'),stnMove=$('stnMove'),cap=$('caption');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const T=reduce?0:1;
+const wait=ms=>new Promise(r=>setTimeout(r,ms*T));
+const slide=(el,from,to,ms,easing)=>el.animate([{transform:from},{transform:to}],{duration:ms*T,easing,fill:'forwards'}).finished;
+
+// 列車：S=0.9 縮放，車輪壓在 y=548 的鐵軌上
+const S=.9,Y=548-108*S;
+const MOM='--blue:#7E2B2B;--line2:#5E1F1F';
+function car(sym,x,wins,w,style='',fresh=[],tag=null){ // 一節車廂；wins＝亮著的窗（1 起算）；fresh＝這一步新亮的窗；tag＝新乘客名牌
+  let h=`<g class="tint"><use href="#${sym}" x="${x}" y="${Y}" width="${w*S}" height="${110*S}" style="${style}"/></g>`,g='',r='',t='';
+  for(const n of wins){const i=n-1,wx=x+(30+32*i)*S,wy=Y+38*S,k=fresh.indexOf(n),cls=k<0?'':` class="fresh" style="animation-delay:${k*Math.min(.12,.8/fresh.length)*T}s"`;
+    r+=`<rect${cls} x="${wx}" y="${wy}" width="${26*S}" height="${24*S}" rx="2"/>`;
+    g+=`<rect${cls} x="${wx-8}" y="${wy-8}" width="${26*S+16}" height="${24*S+16}" rx="8"/>`;
+    const tl=[].concat(tag||[]),ti=tl.findIndex(o=>o.seat===n),tg=tl[ti];if(tg){const cx=wx+13*S,tw=Math.max(72,tg.name.length*18+16),dy=ti*36;t+=`<g class="fresh" style="animation-delay:${k*Math.min(.12,.8/fresh.length)*T}s"><rect x="${cx-tw/2}" y="${Y-30-dy}" width="${tw}" height="30" rx="15" fill="#FFD58A"/><path d="M${cx-7} ${Y-dy} L${cx} ${Y+9-dy} L${cx+7} ${Y-dy}Z" fill="#FFD58A"/><text x="${cx}" y="${Y-9-dy}" text-anchor="middle" class="s-sans" font-size="17" font-weight="900" fill="#1E2A44">${tg.name}</text></g>`}}
+  return h+`<g filter="url(#blur)" fill="#FFB547" style="opacity:var(--glow)">${g}</g><g fill="#FFD58A">${r}</g>${t}`;
+}
+const seat=(arr,n)=>arr&&arr.includes(n)?[1]:[]; // 爸媽各自的小列車：座位 1/2 對應自己車上的第 1 扇窗
+const loco=(x,style='')=>`<g class="tint"><use href="#loco" x="${x}" y="${Y}" width="${200*S}" height="${99}" style="${style}"/></g>`;
+const label=(x,t)=>`<text x="${x}" y="${Y-14}" text-anchor="middle" class="s-sans" font-size="20" font-weight="700" style="fill:var(--sink)">${t}</text>`;
+const TRAINS={
+  none:()=>'',
+  // 所有列車：車廂在左、車頭在右，由左往右開
+  apart:s=>car('short',80,seat(s.on,1),220)+loco(278)+label(179,'爸爸')+car('short',822,seat(s.on,2),220,MOM)+loco(1020,MOM)+label(921,'媽媽'),
+  meet:s=>`<g>${car('short',432,seat(s.on,1),220,'',seat(s.fresh,1))+label(531,'爸爸')}</g><g data-t="dadLoco">${loco(630)}</g><g data-t="mom">${car('short',812,seat(s.on,2),220,MOM,seat(s.fresh,2))+loco(1010,MOM)+label(911,'媽媽')}</g>`,
+  together:s=>car('short',432,s.on,220,'',s.fresh||[])+loco(630)+label(531,'爸爸 · 媽媽'), // 1966 上車後：兩人同坐藍色列車
+  pair:s=>(s.trains.dad?`<g data-t="dad">${car('short',262,seat(s.on,1),220,'',seat(s.fresh,1))+loco(460)+label(361,'爸爸')}</g>`:'')
+        +(s.trains.mom?`<g data-t="mom">${car('short',712,seat(s.on,2),220,MOM,seat(s.fresh,2))+loco(910,MOM)+label(811,'媽媽')}</g>`:''),
+  one:s=>car('car',500,s.on,540,'',s.fresh||[],s.tag)+loco(986)
+};
+
+// 車站：一站時在左邊原位；兩站並排時各縮 0.75。月台面一律在 y=500
+const LAYOUT={1:[{x:150,k:1}],2:[{x:180,k:.75},{x:760,k:.75}]};
+function stationSVG(st,{x,k},slot,n){
+  const yr=/^\d{4}$/.test(st.name),pl=n>1?[-260,820]:[-150,620]; // 臺北以後的站牌＝年份（時光機）
+  return `<g data-slot="${slot}"><g transform="translate(${x} ${500-200*k}) scale(${k})">
+    <g class="tint"><use href="#station" width="400" height="230"/>
+      <rect x="${pl[0]}" y="200" width="${pl[1]}" height="12" fill="#E7DFCC"/><rect x="${pl[0]}" y="209" width="${pl[1]}" height="3" fill="#CFC3A8"/><rect x="${pl[0]}" y="212" width="${pl[1]}" height="18" fill="#8A7457"/>
+      <g transform="translate(-64 200) scale(1.4) translate(64 -200)">
+        <rect x="-104" y="120" width="4" height="80" fill="#3A3A3A"/><rect x="-28" y="120" width="4" height="80" fill="#3A3A3A"/>
+        <rect x="-116" y="104" width="104" height="58" fill="#FFFFFF" stroke="#23211D" stroke-width="2"/>
+        <text x="-64" y="134" text-anchor="middle" class="${yr?'s-cond':'s-sans'}" font-size="${yr?30:23}" font-weight="900" fill="#23211D">${st.name}</text>
+        <text x="-64" y="148" text-anchor="middle" class="s-cond" font-size="${yr?10:9}" letter-spacing="2" fill="#23211D">${st.roman}</text>
+        <text x="-110" y="158" class="s-sans" font-size="8" fill="#23211D">${st.prev||''}</text>
+        <text x="-18" y="158" text-anchor="end" class="s-sans" font-size="8" fill="#23211D">${st.next||''}</text>
+      </g>
+    </g>
+    <g style="opacity:var(--lit)" fill="#FFD58A">
+      <g filter="url(#blur)" opacity=".7"><rect x="80" y="112" width="240" height="70" rx="24"/></g>
+      <path d="M95 172 V124 a24 24 0 0 1 48 0 V172 Z"/><path d="M257 172 V124 a24 24 0 0 1 48 0 V172 Z"/><rect x="189" y="118" width="22" height="34"/>
+    </g></g></g>`;
+}
+const PS=.6,DOOR=514; // 一節車廂時，左側車門的位置
+// 頭上名牌：依造型代號判斷是誰，底色用家族色
+const PU='#8A62A8',CY='#1F7FA3',GR='#6E9228'; // 怡婷家粉紫、偉立家青藍、LOLO 家黃綠（名牌底色）
+const WHO=[[/^(dad|groom)/,'爸爸','#2B4A7E'],[/^(mom|bride)/,'媽媽','#8E2A3A'],[/^yt/,'怡婷',PU],[/^hy/,'翰毅',PU],[/^pdw/,'培典老婆',PU],[/^pd/,'培典',PU],[/^py/,'培元',PU],
+  [/^wl/,'偉立',CY],[/^sj/,'淑娟',CY],[/^zc/,'兆宸',CY],[/^zj/,'兆鈞',CY],[/^lolo/,'LOLO',GR],[/^mz/,'名璋',GR],[/^jk/,'敬凱',GR],[/^jd/,'敬達',GR]];
+function nameTag(k,x,feet=500,ps=PS,lift=0,below=false){const w=WHO.find(([re])=>re.test(k));if(!w)return'';const sp=SPEC(k),H=sp.stage==='baby'?80:STAGES[sp.stage].H,
+  top=feet-(H+18)*ps-lift,tw=w[1]==='LOLO'?42:w[1].length*13+10;
+  if(below)return `<g class="ptint"><rect x="${x-tw/2}" y="${feet+4}" width="${tw}" height="22" rx="11" fill="${w[2]}" stroke="#FFFFFF" stroke-width="1.5"/><text x="${x}" y="${feet+20}" text-anchor="middle" class="s-sans" font-size="13" font-weight="700" fill="#FFFFFF">${w[1]}</text></g>`;
+  return `<g class="ptint"><rect x="${x-tw/2}" y="${top-26}" width="${tw}" height="22" rx="11" fill="${w[2]}" stroke="#FFFFFF" stroke-width="1.5"/><path d="M${x-5} ${top-4} L${x} ${top+2} L${x+5} ${top-4}Z" fill="${w[2]}"/><text x="${x}" y="${top-10}" text-anchor="middle" class="s-sans" font-size="13" font-weight="700" fill="#FFFFFF">${w[1]}</text></g>`}
+const SEAT={dad:1,mom:2,yt:3,wl:4,lolo:5,hy:6,py:7,pd:8,mz:9,jk:10,jd:11,sj:12,zc:13,zj:14,pdw:15};
+const winX=n=>500+(43+32*(n-1))*S; // 長車廂第 n 扇窗的中心 x
+function person(k,x,feet,ps,f,t,extra,tag){return `<g data-k="${k}" data-x="${x}" data-from="${f}" data-to="${t}"${extra}><g class="ptint" transform="translate(${x-60*ps} ${feet-210*ps}) scale(${ps})">${fig(SPEC(k))}</g>${tag}</g>`}
+function platHTML(s){
+  const P=s.plat||[];let out='';
+  const fx=k=>{const w=WHO.find(([re])=>re.test(k));return w&&NEWNAMES[s.key]?.includes(w[1])?(SPEC(k).stage==='baby'?' class="bounce"':' class="wave"'):''}; // 新成員：嬰兒上下跳、大人招手
+  if(Array.isArray(P)){ // 舊式：全部站在車站前的月台
+    P.forEach(([k,x,from,to,pop])=>{const f=`translateX(${(from??DOOR)-x}px)`,t=`translateX(${(to??from??DOOR)-x}px)`;
+      out+=person(k,x,500,PS,f,t,(pop?' data-pop="1"':'')+fx(k),s.tags?nameTag(k,x):'')});return out}
+  const B=P.back||[],F=P.front||[],nb=B.length,psb=nb>6?.52:PS,gb=Math.min(58,285/((nb-1)||1)),xb=nb>1?327.5-gb*(nb-1)/2:330;
+  if(F.length)out+=`<g class="tint" data-strip="1"><rect x="0" y="596" width="1200" height="79" fill="#D9CDB4"/><rect x="0" y="596" width="1200" height="5" fill="#E8C14A"/></g>`;
+  B.forEach(([k,pop],i)=>{const x=xb+gb*i,f=`translateX(${DOOR-x}px)`; // 後方：從車門走出來
+    out+=person(k,x,500,psb,f,f,(pop?' data-pop="1"':'')+fx(k),s.tags?nameTag(k,x,500,psb,nb>6&&i%2?22:0):'')});
+  const PF=PS*1.5,gf=86, // 間距＝人偶最寬處（頭紗、頭髮），靠近但不重疊
+  xf=600-gf*(F.length-1)/2;
+  F.forEach(([k,pop],i)=>{const x=xf+gf*i,id=k.split(/[@!]/)[0],f=`translate(${winX(SEAT[id])-x}px,-110px)`; // 前方：從自己的窗下來
+    out+=person(k,x,648,PF,f,f,' data-grp="front"'+(pop?' data-pop="1"':'')+fx(k),s.tags?nameTag(k,x,648,PF,0,true):'')});
+  return out}
+const people=()=>[...$('plat').querySelectorAll(':scope>[data-k]')],strip=()=>$('plat').querySelector('[data-strip]');
+function setCap(s){if(s.year!==undefined){$('cYear').textContent=s.year;$('cTitle').textContent=s.title;$('cSub').textContent=s.sub}}
+const OVS=['ovCover','ovBlue','ovRed','ovGame','ovQuiz'];
+function paint(s){ // 直接套用某一步的狀態（不做動畫）
+  $('plat').innerHTML=platHTML(s);
+  stage.dataset.mode=s.mode;
+  train.innerHTML=TRAINS[s.train](s);
+  const sts=[].concat(s.st||[]);
+  stnMove.style.display=sts.some(Boolean)?'':'none';
+  $('stns').innerHTML=sts.map((st,i)=>st?stationSVG(st,LAYOUT[sts.length][i],i,sts.length):'').join('');
+  setCap(s);
+  cap.style.opacity=s.year||s.ov?1:0;
+  for(const id of OVS)$(id).classList.toggle('off',s.ov!==id);
+  quiz(s);
+  $('redTicket').classList.toggle('torn',!!s.torn);
+}
+
+// ── 互動遊戲：題目資料。rows＝[答案, [[人, 點剪影時底部的補充], ...]]，同一列＝寫了相同答案的人 ──
+const QS={ // hero 版面：主角人偶放大在左、名字在右，不顯示投票人
+
+  B01:{text:'小時候全家出門，幾乎每次都會發生的事',rows:[['爸爸不見了',[['yt','']]],['大的叫，小的哭',[['lolo','']]]]},
+  B02:{text:'回想小時候一起吃飯，腦中浮現的畫面',rows:[['爸爸一直講辦公室的人事物',[['yt','']]],['爬上桌子偷吃菜，而且老爸都用手、不用筷子；老哥偷吃雞肉之後，會把雞肉排好',[['lolo','']]]]},
+  B03:{text:'家裡從小看到現在，好像一直沒變過的東西',rows:[['畫卷「誠」——它變形了都沒人管',[['yt','']]],['以前是鋼琴，現在是老爸房間的那個化妝衣櫃',[['lolo','']]]]},
+  A01:{text:'爸爸（阿公）最常講的一句話',rows:[
+    ['有這麼嚴重嗎？',[['jk','有這麼嚴重的時候'],['jd','覺得事情沒有很嚴重的時候'],['mz','被 LOLO challenge 的時候']]],
+    ['你有這個爸爸，要覺得很榮幸／很驕傲',[['lolo','不管講到什麼，最後都會繞回老爸的功績，然後就接這句'],['hy','吃飯的時候']]],
+    ['我再講一句就好',[['zc','分享讀書心得，或在教我們要做什麼事的時候']]],
+    ['XXX，來，阿公有話要跟你說。來坐這裡～',[['py','阿公有話想跟我說的時候']]],
+    ['阿公看到你們，就很開心',[['pd','見到的第一面']]],
+    ['哎喲，怎麼那麼臭屁',[['zj','我教阿公一些常識，或給他看我打籃球的影片']]],
+    ['很強',[['yt','稱讚別人的時候']]]]},
+  A02:{text:'爸爸（阿公）一開口，會講到什麼程度？',rows:[ // 順序由 LOLO 指定，「灌醉」壓軸
+    ['講到天荒地老',[['yt','經典案例：太多了'],['jd','']]],
+    ['從盤古開天，到宇宙盡頭',[['jk','']]],
+    ['只要不打斷他，可以說一整天',[['zj','']]],
+    ['停不下來',[['pd','經典案例：講古']]],
+    ['沒有叫停，他不會停',[['lolo','「我講兩件事就好，第一…（5 分鐘）第二…（10 分鐘）第三齁～再講兩分鐘就好（15 分鐘）」']]],
+    ['會講到很深，可以講半個小時以上',[['zc','']]],
+    ['起承轉合，完整說完',[['mz','經典案例：中華電信發展史']]],
+    ['大家點頭',[['hy','經典案例：最年輕的三百八']]],
+    ['需要把阿公灌醉讓他睡著，才能結束話題～',[['py','']]]]},
+  C01:{text:'剛加入這一家時，「原來他們家是這樣相處的」',rows:[['養狗',[['hy','']]],['原來 LOLO 在家講話這麼有恃無恐',[['mz','']]]]},
+  C02a:{id:'C02',text:'第一次見到爸爸，覺得他是什麼樣的人？',rows:[['正派',[['hy','現在有沒有改變？沒有']]],['在外面很有威嚴，一回到家就被女兒吃定的寵女老爸',[['mz','現在有沒有改變？沒']]]]},
+  C02b:{id:'C02',text:'第一次見到媽媽，覺得她是什麼樣的人？',rows:[['賢慧',[['hy','']]],['有智慧、很聰明、廚藝好——選她女兒就對了 ❤️',[['mz','']]]]},
+  C03:{text:'爸爸媽媽有沒有一種很固定的相處模式？',rows:[['爸爸講爸爸的話，媽媽做媽媽的事',[['hy','']]],['夫唱婦隨',[['mz','']]]]},
+  C04:{text:'加入這個家之後，發現這一家特別重要的事',rows:[['節日聚會',[['hy','']]],['包容尊重',[['mz','']]]]},
+  D05:{text:'只有跟阿公阿嬤在一起，才會發生的事',rows:[
+    ['阿公會自己到處走走看看，讓阿嬤找不到',[['pd','']]],
+    ['阿公可以吃到阿嬤切好的水果',[['zj','']]],
+    ['阿公開始講很長很長的故事，然後舅舅奶奶都會白眼阿公，然後偷偷講「又來了」',[['jd','']]],
+    ['打麻將',[['jk','']]],
+    ['喝地下室珍藏的高級酒',[['py','']]]]},
+  D06:{text:'偷偷爆料阿公阿嬤一件事',rows:[['阿公的蚊子六親不認',[['jk','']]],['阿嬤的床很舒服，阿公的床太硬了',[['zj','']]]]},
+  B08:{text:'三個孩子裡，誰最不聽話？',hero:'lolo',name:'怡菁',cameo:{id:'hy',say:'阿菁最不聽話，但是聚會安排總有比爸爸更好的建議與安排'}} // 主角大人偶；下一頁新角色（姐夫，剪影）從右下角跳入
+};
+const nameOf=id=>WHO.find(([re])=>re.test(id));
+// 人頭剪影：同一張人偶畫兩層，上層塗成剪影色（不畫道具，免得一眼被認出），揭曉時淡出
+const bust=(id,i)=>{const sp=LOOK(id,2026);return `<svg viewBox="-6 36 132 112" aria-hidden="true"><defs><filter id="sil${i}"><feFlood flood-color="#3A4566"/><feComposite in2="SourceAlpha" operator="in"/></filter></defs>
+  <g class="face">${fig(sp)}</g><g class="shadow" filter="url(#sil${i})">${fig(sp,['body','bottom','top','hair','acc'])}</g></svg>`};
+function quiz(s){
+  if(s.ov==='ovGame'){$('gStop').textContent=s.stop;$('gameTicket').classList.remove('torn');return}
+  if(s.ov!=='ovQuiz')return;
+  const q=QS[s.q];let k=0;
+  $('qid').textContent=q.id||s.q;$('qtext').textContent=q.text;$('qcap').textContent='';
+  if(q.hero){const c=q.cameo;
+    $('qbody').innerHTML=`<div class="hero${s.cameo?' still':''}"><svg class="shake" viewBox="-10 40 140 175" aria-hidden="true">${fig(LOOK(q.hero,2026))}</svg><div class="heroName">${q.name}</div></div>`+(s.cameo?
+      `<div class="cameo"><div class="cbubble">${c.say}</div><svg viewBox="-10 40 140 175" aria-hidden="true"><defs><filter id="silC"><feFlood flood-color="#0E1630"/><feComposite in2="SourceAlpha" operator="in"/></filter></defs><g filter="url(#silC)">${fig(LOOK(c.id,2026),['body','bottom','top','hair','acc'])}</g></svg><span class="ctag">新角色登場</span></div>`:'');
+    return}
+  const n=q.rows.length;
+  const B=$('qbody');B.style.cssText=`--fs:${n<2?4.4:n<4?3:n>7?2.1:n>6?2.3:2.6}cqw;--hs:${n<2?9:n<4?7.5:n>7?4.4:n>6?5.2:5.8}cqw;--gap:${n>5?.6:1.4}cqw;--n:${Math.max(...q.rows.map(r=>r[1].length))}`;
+  B.innerHTML=`<ol id="qrows">${q.rows.map(([a,ps],r)=>`<li style="animation-delay:${r*.15}s"><div class="ans">${a}</div><div class="who">${ps.map(([id,note])=>{const [,nm,c]=nameOf(id);
+      return `<button type="button" data-nm="${nm}" data-note="${note}" aria-label="揭曉是誰寫的">${bust(id,k++)}<span class="q">?</span><span class="tg" style="background:${c}">${nm}</span></button>`}).join('')}</div></li>`).join('')}</ol>`;
+}
+$('ovQuiz').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;e.stopPropagation(); // 點剪影＝揭曉，不翻頁
+  b.classList.add('on');b.setAttribute('aria-label',b.dataset.nm);$('qcap').innerHTML=`<b>${b.dataset.nm}</b>${b.dataset.note?'：'+b.dataset.note:''}`});
+
+let cur=0,busy=false;
+const setProg=()=>{$('prog').textContent=`${cur+1} / ${STEPS.length}`;$('jump').value=cur;history.replaceState(null,'','#p'+(cur+1))};
+async function next(){
+  if(busy||cur>=STEPS.length-1)return;
+  const a=STEPS[cur],b=STEPS[++cur];setProg();
+  if(a.key===b.key&&(b.enter||b.grow||b.arrive)){
+    busy=true;const kids=people,A=(el,k,o)=>el.animate(k,{duration:o.d*T,delay:(o.w||0)*T,easing:o.e||'ease-out',fill:'forwards'}).finished;
+    if(b.enter){                       // 旁邊滑進第二個車站，新人物淡入
+      paint(b);const old=new Set(a.plat.map(p=>p[0]));
+      await Promise.all([A($('stns').querySelector('[data-slot="1"]'),[{transform:'translateX(500px)',opacity:0},{transform:'none',opacity:1}],{d:1200}),
+        ...kids().filter(g=>!old.has(g.dataset.k)).map(g=>A(g,[{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'none'}],{d:600,w:1000}))]);
+    }else if(b.grow){                  // 寶寶淡出，長大後的樣子淡入
+      await Promise.all(kids().map(g=>A(g,[{opacity:1},{opacity:0}],{d:500})));
+      paint(b);await Promise.all(kids().map(g=>A(g,[{opacity:0,transform:'translateY(14px)'},{opacity:1,transform:'none'}],{d:800})));
+    }else{                             // 列車開進來 → 人走進車門 → 窗亮
+      setCap(b);$('plat').innerHTML=platHTML({plat:[...b.plat,...b.boarders]});
+      train.innerHTML=TRAINS[b.train]({...b,on:a.on,fresh:[]});
+      await A(train.querySelector(`[data-t="${b.arrive}"]`),(b.arrive==='dad'?[{transform:'translateX(-900px)'},{transform:'none'}]:[{transform:'translateX(-420px)',opacity:0},{opacity:1,offset:.35},{transform:'none',opacity:1}]),{d:1800});
+      const bk=new Set(b.boarders.map(p=>p[0]));
+      await Promise.all(kids().filter(g=>bk.has(g.dataset.k)).map(g=>A(g,[{transform:'translateX(0)',opacity:1},{opacity:1,offset:.7},{transform:g.dataset.to,opacity:0}],{d:1100,e:'ease-in'})));
+      paint(b);
+    }
+    busy=false;return}
+  if(a.key===b.key&&b.board){          // 上車：月台的人走進車門，窗戶一扇扇亮起
+    busy=true;
+    const ppl=people(),off=g=>b.approach?.[g.dataset.k]!=null?b.approach[g.dataset.k]-g.dataset.x:0;
+    if(b.approach)await Promise.all(ppl.map(g=>g.animate([{transform:'none'},{transform:`translateX(${off(g)}px)`}],{duration:1200*T,easing:'ease-in-out',fill:'forwards'}).finished));
+    await Promise.all(ppl.map((g,i)=>g.animate([{transform:`translateX(${off(g)}px)`,opacity:1},{opacity:1,offset:.7},{transform:g.dataset.to,opacity:0}],{duration:1300*T,delay:0,easing:'ease-in',fill:'forwards'}).finished));
+    if(strip())await strip().animate([{opacity:1},{opacity:0}],{duration:400*T,fill:'forwards'}).finished;
+    if(a.train==='meet'&&b.train==='together') // 紅色列車由左往右開走
+      await train.querySelector('[data-t="mom"]').animate([{transform:'none'},{transform:'translateX(500px)',opacity:0}],{duration:1600*T,easing:'ease-in',fill:'forwards'}).finished;
+    paint(b);busy=false;return}
+  if(a.ov==='ovGame'&&b.ov==='ovQuiz'){busy=true;$('gameTicket').classList.add('torn');await wait(800);paint(b);busy=false;return} // 撕票根 → 遊戲開始
+  if(a.key===b.key){paint(b);return}   // 同一站：只換疊加層
+  busy=true;                          // 轉場：車站滑出 → 換時段與列車 → 新車站滑入
+  for(const id of OVS)$(id).classList.add('off');
+  cap.style.opacity=0;
+  stage.classList.add('moving');
+  if(NEWBIE.has(b.key))stage.dataset.mode='night'; // 夜晚 → 進站時天亮
+  if(a.st)await slide(stnMove,'translateX(0)','translateX(-1400px)',1100,'ease-in');else await wait(500);
+  if(a.train!==b.train){train.animate([{opacity:1},{opacity:0}],{duration:350*T,fill:'forwards'});await wait(350)}
+  paint(b.alight?{...b,on:a.on,plat:[]}:b);cap.style.opacity=0;
+  if(a.train!==b.train)train.animate([{opacity:0},{opacity:1}],{duration:500*T,fill:'forwards'});
+  if(b.st)await slide(stnMove,'translateX(1400px)','translateX(0)',1300,'ease-out');else await wait(1400);
+  stage.classList.remove('moving');
+  cap.style.opacity=1;
+  if(b.alight){
+    $('plat').innerHTML=platHTML(b);train.innerHTML=TRAINS[b.train](b);
+    const ppl=people(),pop=ppl.filter(g=>g.dataset.pop),back=ppl.filter(g=>!g.dataset.pop&&g.dataset.grp!=='front'),front=ppl.filter(g=>!g.dataset.pop&&g.dataset.grp==='front');
+    const sb=Math.min(500,2500/(back.length||1)),t1=front.length?(back.length?(back.length-1)*sb+900:0):0,t2=t1+(front.length?(front.length-1)*400+900:(back.length-1)*sb+900);
+    const IN=(g,d)=>g.animate([{transform:g.dataset.from,opacity:0},{opacity:1,offset:.2},{transform:'none',opacity:1}],{duration:1300*T,delay:d*T,easing:'ease-out',fill:'both'}).finished;
+    if(strip())strip().animate([{opacity:0},{opacity:1}],{duration:600*T,delay:t1*T,fill:'both'});
+    await Promise.all([...back.map((g,i)=>IN(g,i*sb)),...front.map((g,i)=>IN(g,t1+i*400)),
+      ...pop.map(g=>g.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:700*T,delay:t2*T,fill:'both'}).finished)]);
+  }
+  busy=false;
+}
+function go(n){ // 直接跳到第 n 步（0 起算），不播轉場
+  if(busy||n<0||n>=STEPS.length)return;cur=n;setProg();
+  stnMove.getAnimations().forEach(x=>x.cancel());paint(STEPS[cur]);
+}
+const back=()=>go(cur-1); // 往回一律直接跳，不播轉場
+// 跳頁選單（測試用）：選項文字＝頁碼＋那一頁在做什麼；網址 #p23 可直接開在第 23 頁
+const OVNAME={ // 跳頁選單用
+ovCover:'封面',ovBlue:'藍票',ovRed:'紅票範例',ovGame:'遊戲票根'};
+$('jump').innerHTML=STEPS.map((s,i)=>`<option value="${i}">${i+1}．${s.q?'遊戲 '+s.q:OVNAME[s.ov]||(s.year+' '+s.title)}</option>`).join('');
+$('jump').addEventListener('change',e=>{go(+e.target.value);e.target.blur()});
+
+
+addEventListener('keydown',e=>{
+  if(e.target.tagName==='SELECT')return; // 在跳頁選單裡用方向鍵選頁，不要同時翻頁
+  if(e.target.closest?.('#ovQuiz button')&&(e.key===' '||e.key==='Enter'))return; // 鍵盤操作剪影時不翻頁
+  if(['ArrowRight',' ','PageDown','Enter'].includes(e.key)){e.preventDefault();next()}
+  else if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){e.preventDefault();back()}
+  else if(e.key==='f'||e.key==='F'){(document.fullscreenElement?document.exitFullscreen():stage.requestFullscreen?.())?.catch?.(()=>{})}
+});
+stage.addEventListener('click',next);
+$('bNext').addEventListener('click',next);
+$('bPrev').addEventListener('click',back);
+// 山景複製一份接在右邊，捲動才會無縫（用實體複本，顏色轉場才會同步）
+for(const id of ['farP','nearP']){const c=$(id).cloneNode();c.removeAttribute('id');c.setAttribute('transform','translate(1200 0)');$(id).after(c)}
+go(Math.min(STEPS.length,Math.max(1,+location.hash.match(/^#p(\d+)$/)?.[1]||1))-1);
+</script>
