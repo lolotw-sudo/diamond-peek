@@ -78,6 +78,18 @@ button{font:inherit}
 .peek ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:8px}
 .peek li{background:#fff;border-left:4px solid var(--red);border-radius:4px;padding:8px 12px;font-family:var(--serif);font-weight:700;font-size:17px;line-height:1.6}
 .crew .who{font-size:14px;color:var(--red);font-weight:700}
+.todo{display:grid;gap:16px}
+.todo h3{font-family:var(--serif);font-size:18px;color:var(--blue)}
+.todo ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px}
+.todo li{background:#fff;border-left:4px solid var(--blue);border-radius:4px;padding:8px 12px;font-size:15px;line-height:1.6}
+.todo b{color:var(--red)}
+.todo label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.todo input{flex:none;width:22px;height:22px;margin:2px 0 0;accent-color:var(--blue)}
+.todo input:checked+span{text-decoration:line-through;color:#6A5E50}
+.todo input:checked+span b{color:inherit}
+.survey summary{cursor:pointer;padding-block:4px}
+.survey summary h2{display:inline}
+.surveyBody{display:grid;gap:14px;margin-top:14px}
 
 /* ── 月台留言 ── */
 .platform{padding-block:44px 0;display:grid;gap:12px}
@@ -263,7 +275,11 @@ footer{text-align:center;font-size:13px;padding-block:40px}
 
 <section class="crew" id="crewSec" aria-labelledby="crewTitle" hidden>
   <span class="stamp">家人限定 · 阿公阿嬤看不到這段</span>
-  <h2 id="crewTitle">秘密問卷是做什麼用的？</h2>
+  <h2 id="crewTitle">出發前待辦</h2>
+  <div class="todo" id="todo"><p class="muted">載入中…</p></div>
+  <details class="survey">
+  <summary><h2>秘密問卷是做什麼用的？</h2></summary>
+  <div class="surveyBody">
   <p>你填的那份問卷，會變成鑽石婚宴上「人生列車」遊戲的<b>乘客來信</b>。當天由 LOLO 操作，你們的任務就是提供情緒價值。</p>
   <ol class="steps">
     <li><b>紅票出現</b>螢幕上跳出一張乘客來信，上面是某位家人寫的答案，寄件人被票根遮住。</li>
@@ -285,6 +301,8 @@ footer{text-align:center;font-size:13px;padding-block:40px}
     <li>問卷和答案都<b>不能讓阿公阿嬤知道</b>，各填各的，不用互相討論。</li>
     <li>下面的月台留言，<b>阿公阿嬤也看得到</b>，問卷答案別寫在那裡喔。</li>
   </ol>
+  </div>
+  </details>
   <p class="note">這一段只出現在網址結尾有 <code>#crew</code> 的版本。轉給阿公阿嬤時，請用沒有 #crew 的網址。</p>
 </section>
 
@@ -315,15 +333,27 @@ const store={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{re
 
 // ── 家人版：網址結尾 #crew 才顯示問卷說明（沒有就是阿公阿嬤也能看的全家版）──
 const crew=()=>{const on=location.hash==='#crew';$("crewSec").hidden=!on;if(on&&!window.CREW_LOADED)loadPeek()};
+function renderTodo(){ // 內容在 crew.js 的 window.TODO；<b> 標記日期用 ** 包起來，一律走 textContent 不插 HTML
+  const box=$('todo');box.replaceChildren();
+  for(const g of window.TODO||[]){const sec=document.createElement('section');
+    const h=document.createElement('h3');h.textContent=g.t;const ul=document.createElement('ul');
+    for(const it of g.a){const li=document.createElement('li'),label=document.createElement('label'),cb=document.createElement('input'),txt=document.createElement('span');
+      it.split('**').forEach((x,i)=>{if(!x)return;if(i%2){const b=document.createElement('b');b.textContent=x;txt.append(b)}else txt.append(x)});
+      // ponytail: 勾選只存在這台裝置；要全家同步得改 Apps Script 後端
+      const key='todo:'+it;cb.type='checkbox';try{cb.checked=localStorage.getItem(key)==='1'}catch{}
+      cb.addEventListener('change',()=>{try{cb.checked?localStorage.setItem(key,'1'):localStorage.removeItem(key)}catch{}});
+      label.append(cb,txt);li.append(label);ul.append(li)}
+    sec.append(h,ul);box.append(sec)}
+}
 function loadPeek(){ // 答案放在 crew.js，只有家人版才下載，全家版的網頁原始碼裡沒有答案
   window.CREW_LOADED=1;const sc=document.createElement('script');sc.src='crew.js';
-  sc.onload=()=>{const box=$('peek');box.replaceChildren();
+  sc.onload=()=>{renderTodo();const box=$('peek');box.replaceChildren();
     for(const it of window.CREW||[]){const sec=document.createElement('section');
       const h=document.createElement('h3');h.textContent=it.q;sec.append(h);
       if(it.note){const p=document.createElement('p');p.className='intro';p.textContent=it.note;sec.append(p)}
       const ul=document.createElement('ul');for(const a of it.a){const li=document.createElement('li');li.textContent=a;ul.append(li)}
       sec.append(ul);box.append(sec)}};
-  sc.onerror=()=>{$('peek').textContent='搶先看暫時載入不了，等一下再重新整理看看。'};
+  sc.onerror=()=>{$('peek').textContent='搶先看暫時載入不了，等一下再重新整理看看。';$('todo').textContent='待辦暫時載入不了，等一下再重新整理看看。'};
   document.head.append(sc);
 }
 crew();addEventListener('hashchange',crew);
