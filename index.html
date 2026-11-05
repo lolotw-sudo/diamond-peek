@@ -87,6 +87,17 @@ button{font:inherit}
 .todo input{flex:none;width:22px;height:22px;margin:2px 0 0;accent-color:var(--blue)}
 .todo input:checked+span{text-decoration:line-through;color:#6A5E50}
 .todo input:checked+span b{color:inherit}
+.todo input:disabled+span{opacity:.7}
+.todoBox{display:grid;gap:10px;background:#fff;border-radius:6px;padding:14px}
+.todoBox h3{font-family:var(--serif);font-size:18px;color:var(--blue)}
+.todoBox label{display:grid;gap:4px;font-size:15px;font-weight:700}
+.todoBox select,.todoBox textarea{font:inherit;font-weight:400;width:100%;padding:8px;border:1px solid #B8AD9C;border-radius:4px;background:#fff;color:var(--paperInk)}
+.todoBox button{justify-self:start;font:inherit;font-weight:700;background:var(--blue);color:var(--paper);border:0;border-radius:4px;padding:8px 18px;cursor:pointer}
+.todoBox button:disabled{opacity:.6;cursor:default}
+#todoMsg{font-size:14px;color:var(--red);font-weight:700;min-height:1.4em}
+#todoNotes{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+#todoNotes li{border-left:4px solid var(--red);padding:2px 10px;font-size:15px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+#todoNotes small{display:block;color:#6A5E50;font-size:13px}
 .survey summary{cursor:pointer;padding-block:4px}
 .survey summary h2{display:inline}
 .surveyBody{display:grid;gap:14px;margin-top:14px}
@@ -277,6 +288,18 @@ footer{text-align:center;font-size:13px;padding-block:40px}
   <span class="stamp">家人限定 · 阿公阿嬤看不到這段</span>
   <h2 id="crewTitle">出發前待辦</h2>
   <div class="todo" id="todo"><p class="muted">載入中…</p></div>
+  <div class="todoBox">
+    <h3>有意見請留言</h3>
+    <ul id="todoNotes"></ul>
+    <form id="todoForm">
+      <div class="todoBox" style="padding:0">
+        <label>你是誰<select id="todoName" required><option value="">請選擇</option></select></label>
+        <label>留言<textarea id="todoText" rows="3" maxlength="300" required></textarea></label>
+        <button type="submit">送出留言</button>
+      </div>
+    </form>
+    <p id="todoMsg" role="status"></p>
+  </div>
   <details class="survey">
   <summary><h2>秘密問卷是做什麼用的？</h2></summary>
   <div class="surveyBody">
@@ -333,18 +356,47 @@ const store={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{re
 
 // ── 家人版：網址結尾 #crew 才顯示問卷說明（沒有就是阿公阿嬤也能看的全家版）──
 const crew=()=>{const on=location.hash==='#crew';$("crewSec").hidden=!on;if(on&&!window.CREW_LOADED)loadPeek()};
-function renderTodo(){ // 內容在 crew.js 的 window.TODO；<b> 標記日期用 ** 包起來，一律走 textContent 不插 HTML
+// ── 待辦：內容在 crew.js 的 window.TODO，勾選與留言存在 Apps Script，全家看到同一份 ──
+const todoMsg=t=>{$('todoMsg').textContent=t};
+const todoBoxes=()=>[...document.querySelectorAll('#todo input')];
+function renderTodo(){
   const box=$('todo');box.replaceChildren();
   for(const g of window.TODO||[]){const sec=document.createElement('section');
     const h=document.createElement('h3');h.textContent=g.t;const ul=document.createElement('ul');
-    for(const it of g.a){const li=document.createElement('li'),label=document.createElement('label'),cb=document.createElement('input'),txt=document.createElement('span');
+    for(const [key,it] of g.a){const li=document.createElement('li'),label=document.createElement('label'),cb=document.createElement('input'),txt=document.createElement('span');
       it.split('**').forEach((x,i)=>{if(!x)return;if(i%2){const b=document.createElement('b');b.textContent=x;txt.append(b)}else txt.append(x)});
-      // ponytail: 勾選只存在這台裝置；要全家同步得改 Apps Script 後端
-      const key='todo:'+it;cb.type='checkbox';try{cb.checked=localStorage.getItem(key)==='1'}catch{}
-      cb.addEventListener('change',()=>{try{cb.checked?localStorage.setItem(key,'1'):localStorage.removeItem(key)}catch{}});
+      cb.type='checkbox';cb.dataset.key=key;cb.disabled=true;
+      cb.addEventListener('change',async()=>{const on=cb.checked;cb.disabled=true;
+        const j=await todoPost({action:'toggle',key,on});cb.disabled=false;if(!j)cb.checked=!on});
       label.append(cb,txt);li.append(label);ul.append(li)}
     sec.append(h,ul);box.append(sec)}
+  const sel=$('todoName');for(const n of ['怡婷','翰毅','培元','培典','培典老婆','偉立','淑娟','兆宸','兆鈞','LOLO','名璋','敬凱','敬達'])sel.append(new Option(n,n));
+  sel.value=store.get('todoName','');
+  loadTodo();
 }
+function showTodo(j){
+  const on=new Set(j.checked);for(const cb of todoBoxes()){cb.checked=on.has(cb.dataset.key);cb.disabled=false}
+  $('todoNotes').replaceChildren(...j.comments.map(c=>{const li=document.createElement('li'),m=document.createElement('small');
+    m.textContent=c.name+'・'+new Date(c.time).toLocaleString('zh-TW',{timeZone:'Asia/Taipei',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
+    li.append(m,c.text);return li}));
+}
+async function loadTodo(){
+  try{const j=await(await fetch(API+'?board=todo')).json();
+    if(j.board!=='todo')throw 0; // 後端還沒更新時不可寫入，不然會寫到舊留言板
+    showTodo(j);todoMsg('')}
+  catch{todoMsg('勾選和留言暫時載入不了，等一下再重新整理看看。')}
+}
+// 成功回傳新狀態，失敗回傳 null
+async function todoPost(body){
+  try{const j=await(await fetch(API,{method:'POST',body:JSON.stringify({board:'todo',...body})})).json();
+    if(j.ok&&j.board==='todo'){showTodo(j);todoMsg('');return j}
+    todoMsg(j.error||'沒有存成功，請再試一次。');return null}
+  catch{todoMsg('沒有存成功，請確認網路後再試一次。');return null}
+}
+$('todoForm').addEventListener('submit',async e=>{e.preventDefault();
+  const btn=e.target.querySelector('button'),name=$('todoName').value;btn.disabled=true;
+  const j=await todoPost({action:'comment',name,text:$('todoText').value});btn.disabled=false;
+  if(j){$('todoText').value='';store.set('todoName',name)}});
 function loadPeek(){ // 答案放在 crew.js，只有家人版才下載，全家版的網頁原始碼裡沒有答案
   window.CREW_LOADED=1;const sc=document.createElement('script');sc.src='crew.js';
   sc.onload=()=>{renderTodo();const box=$('peek');box.replaceChildren();
