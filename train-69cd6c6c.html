@@ -22,6 +22,10 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);margin:0;padd
 .moving .far{animation:scroll 9s linear infinite}
 .moving .near{animation:scroll 5s linear infinite}
 .moving .sleep{animation:sleep .25s linear infinite}
+.fan .sw{animation:sway 1.4s ease-in-out calc(var(--d)*-.45s) infinite alternate}@keyframes sway{from{transform:translateX(-8px)}to{transform:translateX(8px)}}
+.heart{animation:heart 2.4s ease-out infinite;transform-box:fill-box;transform-origin:center}@keyframes heart{0%{opacity:0;transform:translateY(0) scale(.6)}20%{opacity:1}100%{opacity:0;transform:translateY(-60px) scale(1.1)}}
+.proud .hb,.proud .hf{transform:rotate(-7deg)}
+.petal{animation:petal 4s linear infinite;transform-box:fill-box;transform-origin:center}@keyframes fadein{from{opacity:0}}@keyframes petal{0%{opacity:0;transform:translate(0,0) rotate(0)}12%{opacity:1}50%{transform:translate(14px,calc(var(--fall)*.5)) rotate(200deg)}85%{opacity:1}100%{opacity:0;transform:translate(-8px,var(--fall)) rotate(400deg)}}
 @keyframes scroll{to{transform:translateX(-1200px)}}
 @keyframes sleep{to{transform:translateX(-36px)}}
 #caption{transition:opacity .5s}
@@ -93,7 +97,26 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);margin:0;padd
 @keyframes wave{0%,80%,100%{transform:none}14%,38%,62%{transform:rotate(118deg)}26%,50%{transform:rotate(96deg)}72%{transform:rotate(108deg)}} /* 手舉到肩膀高度往外揮；超過約 125 度手會跑到大頭後面 */
 @keyframes shake{0%,70%,100%{transform:none}10%,30%,50%{transform:rotate(-9deg)}20%,40%,60%{transform:rotate(9deg)}}
 @keyframes bounce{0%,100%{transform:none}50%{transform:translateY(-12px)}}
-@media (prefers-reduced-motion:reduce){.stage svg *,.overlay,#caption{transition:none}.moving .far,.moving .near,.moving .sleep,.torn #stub,.fresh,.blink,#qrows li,.hero svg,.heroName,.cameo,.cbubble,.wave .arm,.shake .arm,.shake .hb,.shake .hf,.bounce .ptint>*{animation:none}#gStub{transition:none}}
+/* 阿公講古 */
+#ovTour{place-items:stretch;background:#A3D2EA}
+#tourBox{position:relative;width:100%;height:100%;overflow:hidden}
+#tourBox>svg.scene{position:absolute;inset:0;width:100%;height:100%}
+.tHead{position:absolute;left:3.6cqw;top:3cqw;color:#1E2A44}
+.tHead small{display:block;font-family:var(--cond);font-size:1.7cqw;letter-spacing:.14em;color:#4F5A70}
+.tHead b{font-family:var(--serif);font-weight:900;font-size:3.8cqw}
+.tGuide{position:absolute;right:5cqw;bottom:1.5cqw;height:21cqw;animation:qslide .6s both}
+.tSay{position:absolute;right:3cqw;top:14cqw;width:42cqw;box-sizing:border-box;background:#F4EAD2;color:#3A1F1A;border-radius:1.6cqw;padding:1.4cqw 2cqw;font-size:2.4cqw;font-weight:700;line-height:1.5;box-shadow:0 .6cqw 1.4cqw rgba(0,0,0,.3);animation:qpop .45s .4s both}
+.tSay::after{content:"";position:absolute;top:100%;right:8cqw;border:1.2cqw solid transparent;border-top-color:#F4EAD2}
+.graze{animation:graze 2.6s ease-in-out infinite}.graze.b{animation-delay:-1s}.graze.c{animation-delay:-1.8s}
+@keyframes graze{50%{transform:translateY(-3px)}}
+.jumper{animation:jumpA 4.4s ease-in infinite}.jumper.b{animation:jumpB 4.4s ease-in -2.2s infinite}
+.splash{transform-box:fill-box;transform-origin:center;animation:splash 4.4s linear infinite}.splash.b{animation-delay:-2.2s}
+@keyframes jumpA{0%,32%{transform:none;opacity:1}58%{transform:translate(46px,270px) rotate(16deg);opacity:1}59%,92%{transform:translate(46px,270px);opacity:0}93%{transform:none;opacity:0}100%{transform:none;opacity:1}}
+@keyframes jumpB{0%,32%{transform:none;opacity:1}58%{transform:translate(-40px,168px) rotate(-14deg);opacity:1}59%,92%{transform:translate(-40px,168px);opacity:0}93%{transform:none;opacity:0}100%{transform:none;opacity:1}}
+@keyframes splash{0%,57%{opacity:0;transform:scale(.2)}60%{opacity:.95}80%,100%{opacity:0;transform:scale(1.5)}}
+.bob{animation:graze 1.8s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.tGuide,.tSay,.graze,.jumper,.splash,.bob{animation:none}.splash{opacity:0}}
+@media (prefers-reduced-motion:reduce){.petal{display:none}.stage svg *,.overlay,#caption{transition:none}.moving .far,.moving .near,.moving .sleep,.fan .sw,.heart,.torn #stub,.fresh,.blink,#qrows li,.hero svg,.heroName,.cameo,.cbubble,.wave .arm,.shake .arm,.shake .hb,.shake .hf,.bounce .ptint>*{animation:none}#gStub{transition:none}}
 </style>
 
 <div class="stage" id="stage" data-mode="day" role="region" aria-label="人生列車簡報畫面，點一下或按右鍵前進">
@@ -178,6 +201,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);margin:0;padd
 <rect x="0" y="544" width="1200" height="5" fill="#8A8F98"/>
 
 <!-- 列車（由程式產生） -->
+<g id="platB"></g><!-- 車站月台上的人：畫在列車後面 -->
 <g id="train"></g>
 <g id="plat"></g><!-- 月台上的人物（由程式產生；畫在列車前面） -->
 
@@ -192,28 +216,28 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);margin:0;padd
 <!-- 封面 -->
 <div class="overlay" id="ovCover">
   <div class="cover">
-    <h1>人生列車</h1>
-    <p>爸爸媽媽的六十年　1967 — 2027</p>
+    <h1>鑽石婚號，出發！</h1>
+    <p>李添永 × 馬玉霞・鑽石婚紀念列車</p>
     <div class="go">按 → 或點一下出發</div>
   </div>
 </div>
 
 <!-- 藍票：同一班車 -->
 <div class="overlay off" id="ovBlue">
-<svg class="ticket" viewBox="0 0 760 250" role="img" aria-label="紀念車票：車埕到花壇，同一班車，1967">
+<svg class="ticket" viewBox="0 0 760 250" role="img" aria-label="紀念車票：車埕到花壇，阿公講古，1966">
   <g mask="url(#tmask)">
     <rect width="760" height="250" rx="4" fill="#1D3F7A"/>
     <rect x="0" y="22" width="540" height="206" fill="#F4EAD2"/>
     <use href="#loco" x="150" y="62" width="280" height="154" opacity=".13"/>
   </g>
-  <text x="30" y="60" class="s-cond" font-size="22" font-weight="600" fill="#1D3F7A">No. 1967-0002</text>
+  <text x="30" y="60" class="s-cond" font-size="22" font-weight="600" fill="#1D3F7A">No. 1966-0002</text>
   <text x="500" y="60" class="s-sans" font-size="21" font-weight="900" fill="#1D3F7A" text-anchor="end">車埕 ─ 花壇</text>
-  <text x="270" y="162" class="s-sans" font-size="86" font-weight="900" fill="none" stroke="#1D3F7A" stroke-width="3" text-anchor="middle" letter-spacing="6">同一班車</text>
-  <g class="s-sans" font-size="15" font-weight="700" fill="#1D3F7A"><text x="54" y="208">日期 1967</text><text x="164" y="208">車次 鑽石婚號</text><text x="304" y="208">乘客 2 人</text><text x="404" y="208">有效 60 年</text></g>
-  <text x="650" y="62" class="s-sans" font-size="24" font-weight="900" fill="#F4EAD2" text-anchor="middle">車埕 → 2027</text>
-  <text x="650" y="92" class="s-sans" font-size="14" fill="#F4EAD2" text-anchor="middle">1967 上車　座位 1・2</text>
+  <text x="270" y="162" class="s-sans" font-size="86" font-weight="900" fill="none" stroke="#1D3F7A" stroke-width="3" text-anchor="middle" letter-spacing="6">阿公講古</text>
+  <g class="s-sans" font-size="15" font-weight="700" fill="#1D3F7A"><text x="54" y="208">日期 1966</text><text x="164" y="208">車次 鑽石婚號</text><text x="304" y="208">乘客 2 人</text><text x="404" y="208">有效 60 年</text></g>
+  <text x="650" y="62" class="s-sans" font-size="24" font-weight="900" fill="#F4EAD2" text-anchor="middle">車埕 → 2026</text>
+  <text x="650" y="92" class="s-sans" font-size="14" fill="#F4EAD2" text-anchor="middle">1966 上車　座位 1・2</text>
   <use href="#loco" x="600" y="104" width="100" height="55" style="--blue:#F4EAD2;--glass:#1D3F7A;--line2:#1D3F7A;--stripe:#1D3F7A;--under:#F4EAD2"/>
-  <text x="650" y="196" class="s-cond" font-size="17" fill="#F4EAD2" text-anchor="middle">No. 1967-0002</text>
+  <text x="650" y="196" class="s-cond" font-size="17" fill="#F4EAD2" text-anchor="middle">No. 1966-0002</text>
 </svg>
 </div>
 
@@ -239,6 +263,8 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);margin:0;padd
 </div></div>
 
 <!-- 紅票：乘客來信（範例資料） -->
+<!-- 阿公講古：車埕、水里、民族路橋三頁（畫面由 tour() 產生） -->
+<div class="overlay off" id="ovTour"><div id="tourBox"></div></div>
 <div class="overlay off" id="ovRed">
 <svg class="ticket" id="redTicket" viewBox="0 0 760 250" role="img" aria-label="乘客來信範例：爸爸最常講的一句話「有那麼嚴重嗎？」">
   <g mask="url(#tmask)">
@@ -269,22 +295,29 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);margin:0;padd
   <span>鍵盤 <kbd>←</kbd> <kbd>→</kbd> 或空白鍵　<kbd>F</kbd> 全螢幕</span>
 </div>
 
-<script src="chars.js?v=3"></script><!-- 改 chars.js 時把 v 加 1，避免瀏覽器用到舊版 -->
+<script src="train-chars.js?v=6"></script><!-- 改 chars.js 時把 v 加 1，避免瀏覽器用到舊版 -->
 <script>
 // ── 腳本：每一步的畫面。key 相同＝同一站，不轉場；key 改變＝轉場並切換時段 ──
 const ST={
   chechang:{name:'車埕',roman:'CHECHENG',prev:'← 水里'},
   huatan:{name:'花壇',roman:'HUATAN',prev:'← 彰化'},
+  taipei:{name:'臺北',roman:'TAIPEI',prev:'← 車埕',next:'水里 →'},
+  shuili:{name:'水里',roman:'SHUILI',prev:'← 二水',next:'車埕 →'},
   letter:{name:'乘客來信',roman:'LETTERS',prev:'← 2025'}
 };
-const Y1967={name:'1967',roman:'車埕 · 結婚',prev:'← 1966',next:'1968 →'};
+const Y1967={name:'1966',roman:'車埕 · 結婚',prev:'← 1965',next:'1968 →'}; // 1966 結婚；key 仍用 '1967' 只是為了和臺北站分開、保留轉場
 // 人物造型（Q 版紙娃娃，畫法在 chars.js）；新生兒包巾＝該房家族色
 const BLK='#2E2420';
 const PEOPLE={
   dadBaby:{stage:'baby',wrap:'#DCE4F0'},
   dad57:{stage:'adult',hair:'side',hairColor:BLK,top:'shirt',topColor:'#F7F4EC',sleeve:'short',bottom:'pants',bottomColor:'#9A8766',belt:1,prop:'suitcase'},
-  mom58:{stage:'teen',hair:'bob',hairColor:BLK,top:'sailor',topColor:'#FFFFFF',bottom:'skirt',bottomColor:'#2F3E5C',prop:'suitcase'},
+  mom58:{stage:'adult',hair:'bob',hairColor:BLK,top:'blouse',topColor:'#F7F4EC',sleeve:'short',bottom:'skirt',bottomColor:'#2F3E5C',prop:'suitcase'}, // 1966 北上時 21 歲
   momBaby:{stage:'baby',wrap:'#F2D6DA'},
+  momWork:{stage:'adult',hair:'long',hairColor:BLK,top:'blouse',topColor:'#F7F4EC',sleeve:'short',bottom:'skirt',bottomColor:'#2F3E5C'}, // 水里電信局上班
+  momProud:{stage:'adult',hair:'long',hairColor:BLK,top:'blouse',topColor:'#F7F4EC',sleeve:'short',bottom:'skirt',bottomColor:'#2F3E5C',pose:'cross',scale:1.2,anim:'proud'}, // 被追求的媽媽：放大、抱胸、下巴抬高
+  fanA:{stage:'adult',hair:'short',hairColor:BLK,top:'shirt',topColor:'#C9B26A',bottom:'pants',bottomColor:'#5E6270',belt:1,acc:['bouquet'],anim:'fan'}, // 追求者（路人，不掛名牌）：冒愛心、晃來晃去
+  fanB:{stage:'adult',hair:'side',hairColor:BLK,top:'shirt',topColor:'#7FA38A',sleeve:'short',bottom:'pants',bottomColor:'#8C7B5E',belt:1,acc:['bouquet'],anim:'fan'},
+  fanC:{stage:'adult',hair:'short',hairColor:BLK,top:'suit',topColor:'#6B5A4A',tie:'#B4505F',bottom:'pants',bottomColor:'#6B5A4A',acc:['bouquet'],anim:'fan'},
   dad66:{stage:'adult',hair:'side',hairColor:BLK,top:'shirt',topColor:'#F7F4EC',sleeve:'short',bottom:'pants',bottomColor:'#9A8766',belt:1},
   mom66:{stage:'adult',hair:'long',hairColor:BLK,top:'dress',topColor:'#C96A78',sleeve:'short',bottom:'dress',shoe:'#8C5A4A'},
   groom:{stage:'adult',hair:'side',hairColor:BLK,top:'suit',topColor:'#2B2F3A',tie:'#9E2B25',bottom:'pants',bottomColor:'#2B2F3A',acc:['corsage']},
@@ -312,8 +345,8 @@ const PEOPLE={
   wlBaby:{stage:'baby',wrap:'#CFE8F2'},
   loloBaby:{stage:'baby',wrap:'#E3EEC2'}
 };
-// ── 依年份自動算年紀、換造型（1999 以後的站都用這個）：代號＠年份，例如 'dad@2010'、'lolo@2001!bride'
-const BORN={dad:1939,mom:1944,yt:1968,wl:1970,lolo:1975,py:1997,pd:1999,jk:2002,jd:2004,zc:2008,zj:2010},MATE={hy:'yt',mz:'lolo',sj:'wl',pdw:'pd'}; // 配偶生年不明，先當作同年
+// ── 依年份自動算年紀、換造型（1995 以後的站都用這個）：代號＠年份，例如 'dad@2010'、'lolo@2001!bride'
+const BORN={dad:1939,mom:1945,yt:1968,wl:1970,lolo:1975,py:1995,pd:1998,jk:2002,jd:2004,zc:2008,zj:2010},MATE={hy:'yt',mz:'lolo',sj:'wl',pdw:'pd'}; // 配偶生年不明，先當作同年
 const HOUSE={dad:'dad',mom:'mom',yt:'yt',hy:'yt',py:'yt',pd:'yt',pdw:'yt',wl:'wl',sj:'wl',zc:'wl',zj:'wl',lolo:'lolo',mz:'lolo',jk:'lolo',jd:'lolo'};
 const WRAP={yt:'#E3D0EE',wl:'#CFE8F2',lolo:'#E3EEC2'},TIE={yt:'#A97FC4',wl:'#2F93B8',lolo:'#8DB33A'};
 const TOP={dad:'#3E5F96',mom:'#8E2A3A',yt:'#A97FC4',hy:'#7E5E9E',py:'#CDB0E0',pd:'#9A74BC',pdw:'#E3C8EE',wl:'#2F93B8',sj:'#7CC6DD',zc:'#1F6F8F',zj:'#9ED8EA',lolo:'#8DB33A',mz:'#6A8F2A',jk:'#C3DB6E',jd:'#A2C24E'};
@@ -343,23 +376,26 @@ const R=n=>Array.from({length:n},(_,i)=>i+1);
 const STEPS=[
   {key:'cover',train:'none',ov:'ovCover'},
   // 開場：車埕、花壇兩站並排 → 兩人出生 → 長大 → 各自的列車進站、上車
-  {key:'start',st:[ST.chechang,null],train:'pair',trains:{},on:[],plat:[['dadBaby',225]],year:'1939 · 車埕',title:'爸爸出生了。',sub:'集集線的最後一站，一個鐵路人家的孩子。'},
-  {key:'start',st:[ST.chechang,ST.huatan],enter:1,plat:[['dadBaby',225],['momBaby',672]],year:'1944 · 花壇',title:'媽媽出生了。',sub:'縱貫線上的小站，也是一個鐵路人家。'},
-  {key:'start',grow:1,plat:[['dad57',225],['mom58',672]],year:'1957 · 1958',title:'兩個人都長大了。',sub:'爸爸 18 歲、媽媽 14 歲，準備離開家鄉。'},
-  {key:'start',arrive:'dad',trains:{dad:1},on:[1],plat:[['mom58',672]],boarders:[['dad57',225,276]],year:'1957 · 車埕',title:'爸爸搭上北上的列車。',sub:'18 歲，提著皮箱往臺北去。'},
-  {key:'start',arrive:'mom',trains:{dad:1,mom:1},on:[1,2],plat:[],boarders:[['mom58',672,726]],year:'1958 · 花壇',title:'媽媽也北上了。',sub:'14 歲，兩列車各自開往臺北。'},
-  {key:'north',train:'apart',on:[1,2],year:'1957 · 1958',title:'兩個人，先後北上。',sub:'各自搭著自己的車，還不認識彼此。'},
-  {key:'1966',st:{name:'臺北',roman:'TAIPEI',prev:'← 1958',next:'1967 →'},train:'meet',alight:1,on:[],plat:[['dad66',215,446],['mom66',405,826,446]],year:'1966 · 臺北',title:'兩條路線，在臺北交會。',sub:'兩個人一前一後下了車，在月台上等著。'},
-  {key:'1966',board:1,approach:{dad66:285,mom66:335},train:'together',on:[1,2],sub:'兩個人走近彼此，一起坐上了藍色的火車。'},
-  {key:'1967',st:Y1967,train:'one',alight:1,on:[],plat:[['bride',335,514],['groom',400,514]],year:'1967 · 車埕',title:'兩個人，結婚了。',sub:'回到爸爸出生的車埕，穿著禮服一起下車。'},
-  {key:'1967',board:1,on:[1,2],title:'兩個人，搭上同一班車。',sub:'車廂裡亮著 2 盞燈，還有 13 個座位在等人。'},
+  {key:'start',st:[ST.chechang,null],train:'pair',trains:{},on:[],plat:[['dadBaby',225]],year:'1939 · 車埕',title:'男主角：李添永出生了。',sub:'車埕站站長的兒子，排行老四。'},
+  {key:'start',st:[ST.chechang,ST.huatan],enter:1,plat:[['dadBaby',225],['momBaby',672]],year:'1945 · 花壇',title:'女主角：馬玉霞出生了。',sub:'花壇站站長的長女。'},
+  {key:'start',grow:1,st:[ST.chechang,null],plat:[['dad57',225]],year:'1958 · 車埕',title:'爸爸 19 歲了。',sub:'要到臺北電信局工程總隊上班，準備離開家鄉。'},
+  {key:'start',arrive:'dad',trains:{dad:1},on:[1],plat:[],boarders:[['dad57',225,276]],year:'1958 · 車埕',title:'爸爸搭上北上的列車。',sub:'高中畢業的他那年19 歲，提著皮箱往臺北去。'},
+  {key:'taipei',st:ST.taipei,train:'dad',alight:1,on:[],plat:[['dad57',300,446]],year:'1958 · 臺北',title:'在臺北電信局工程總隊上班。',sub:'一個人在臺北打拼。'},
+  {key:'shuili',st:ST.shuili,train:'none',plat:[['fanB',200],['fanA',262],['momProud',345],['fanC',428]],year:'1965 · 水里',title:'媽媽在水里電信局上班。',sub:'那個年代的電信局就像現在的台積電，薪水比站長還高，正值青春年華的媽媽追求者很多。'},
+  {key:'apart',st:[ST.taipei,ST.shuili],train:'visit',on:[1],plat:[['dad66',300],['momWork',900]],year:'1965 · 臺北 ⇄ 水里',title:'經過阿姑的牽線，兩個人認識了。',sub:'26歲的爸爸在臺北、21歲的媽媽在水里，爸爸回車埕的次數從一年2次，變成12次。'},
+  {key:'1967',st:Y1967,train:'wed',drive:1,alight:1,arriveOn:[1,2],left:1,seq:1,on:[],plat:[['groom',335,446,514],['bride',400,826,514]],year:'1966 · 車埕',title:'兩個人，結婚了。',sub:'結婚的地點就是在車埕站站長宿舍，也是我們現在所在的餐廳。'},
+  {key:'1967',board:1,train:'one',on:[1,2],title:'搭上同一班車，上台北創建新的家庭',sub:'婚後的媽媽也調到臺北電信局，一同在台北工作。'},
   {key:'1967',ov:'ovBlue'},
-  {key:'1968',st:{name:'1968',roman:'怡婷上車',prev:'← 1967',next:'1970 →'},train:'one',alight:1,on:[],plat:[['dad70',320],['ytBaby',372,514,null,'pop'],['mom70',425]],year:'1968 · 新乘客',title:'第一位新乘客：怡婷。',sub:'爸爸媽媽下車，迎接第一個孩子。'},
+  // ── 阿公講古：阿公親口講（內容取自阿公提供的文字），接在結婚藍票之後 ──
+  {key:'tour',train:'one',on:[1,2],ov:'ovTour',t:0,year:'阿公講古',title:'車埕：阿祖的站長宿舍'},
+  {key:'tour',ov:'ovTour',t:1,title:'水里：離旅館很近的回憶'},
+  {key:'tour',ov:'ovTour',t:2,title:'民族路橋：夏天的比賽'},
+  {key:'1968',st:{name:'1968',roman:'怡婷上車',prev:'← 1966',next:'1970 →'},train:'one',alight:1,on:[],plat:[['dad70',320],['ytBaby',372,514,null,'pop'],['mom70',425]],year:'1968 · 新乘客',title:'第一位新乘客：怡婷。',sub:'爸爸媽媽下車，迎接第一個孩子。'},
   {key:'1968',board:1,on:[1,2,3],tag:{seat:3,name:'怡婷'},title:'老大怡婷上車了。',sub:'車上從 2 個人，變成 3 個人。'},
   {key:'1970',st:{name:'1970',roman:'偉立上車',prev:'← 1968',next:'1975 →'},train:'one',alight:1,on:[],plat:[['dad70',300],['mom70',412],['yt70',248],['wlBaby',356,514,null,'pop']],year:'1970 · 新乘客',title:'第二位新乘客：偉立。',sub:'怡婷 2 歲，這一年當上了姐姐。'},
   {key:'1970',board:1,on:[1,2,3,4],tag:{seat:4,name:'偉立'},title:'老二偉立上車了。',sub:'車上 4 個人了。'},
-  {key:'1975',st:{name:'1975',roman:'LOLO 上車',prev:'← 1970',next:'1994 →'},train:'one',alight:1,on:[],plat:[['dad75',285],['mom70',392],['yt75',230],['wl75',448],['loloBaby',338,514,null,'pop']],year:'1975 · 新乘客',title:'第三位新乘客：LOLO。',sub:'姐姐 7 歲、哥哥 5 歲。'},
-  {key:'1975',board:1,on:[1,2,3,4,5],tag:{seat:5,name:'LOLO'},title:'老三 LOLO 上車了。',sub:'一家五口到齊。'},
+  {key:'1975',st:{name:'1975',roman:'LOLO 上車',prev:'← 1970',next:'1993 →'},train:'one',alight:1,on:[],plat:[['dad75',285],['mom70',392],['yt75',230],['wl75',448],['loloBaby',338,514,null,'pop']],year:'1975 · 新乘客',title:'第三位新乘客：怡菁。',sub:'姐姐 7 歲、哥哥 5 歲。'},
+  {key:'1975',board:1,on:[1,2,3,4,5],tag:{seat:5,name:'LOLO'},title:'老三 怡菁 LOLO 上車了。',sub:'一家五口到齊。'},
   // ── 互動遊戲第一站：三兄妹的童年（一頁一題；點人頭剪影揭曉是誰寫的） ──
   {key:'1975',ov:'ovGame',stop:'第一站 · 三兄妹的童年'},
   {key:'1975',ov:'ovQuiz',q:'B01'},
@@ -367,25 +403,26 @@ const STEPS=[
   {key:'1975',ov:'ovQuiz',q:'B03'},
   {key:'1975',ov:'ovQuiz',q:'B08'},
   {key:'1975',ov:'ovQuiz',q:'B08',cameo:1},
-  // 1994：怡婷結婚，第一位新家人翰毅上車（座位 6）
-  {key:'1994',st:{name:'1994',roman:'翰毅上車',prev:'← 1975',next:'1997 →'},train:'one',alight:1,on:[],plat:[['dad94',255],['mom94',420],['wl94',200],['lolo94',475],['yt94',310,514,null,'pop'],['hy94',365,514,null,'pop']],year:'1994 · 新家人',title:'第一位新家人：翰毅。',sub:'爸媽、偉立、LOLO 先下車，姐姐和姐夫一起出現。'},
-  {key:'1994',board:1,on:[1,2,3,4,5,6],tag:{seat:6,name:'翰毅'},title:'姐夫翰毅上車了。',sub:'車上 6 個人了。'},
-  // 1997：第一位孫子培元出生（怡婷家，座位 7）；全家 6 人下車，寶寶出現在怡婷與翰毅中間
-  {key:'1997',st:{name:'1997',roman:'培元上車',prev:'← 1994',next:'1999 →'},train:'one',alight:1,on:[],plat:G2(1997,['dad','mom','wl','lolo'],['yt',['py'],'hy']),year:'1997 · 新乘客',title:'第一位孫子：培元。',sub:'全家下車，迎接怡婷和翰毅的第一個孩子。'},
-  {key:'1997',board:1,on:[1,2,3,4,5,6,7],tag:{seat:7,name:'培元'},title:'培元上車了。',sub:'爸爸媽媽當上了阿公阿嬤。車上 7 個人了。'},
-  // 1999 → 2025：人多了，大家站到列車前方的長月台，從自己的窗下車、回自己的窗上車
-  {key:'1999',st:{name:'1999',roman:'培典上車',prev:'← 1997',next:'2001 →'},train:'one',alight:1,on:[],plat:G2(1999,['dad','mom','wl','lolo'],['yt','py',['pd'],'hy']),year:'1999 · 新乘客',title:'第二位孫子：培典。',sub:'培元 2 歲，當上了哥哥。爸爸也 60 歲了。'},
-  {key:'1999',board:1,on:R(8),tag:{seat:8,name:'培典'},title:'培典上車了。',sub:'車上 8 個人了。'},
-  {key:'2001',st:{name:'2001',roman:'名璋上車',prev:'← 1999',next:'2002 →'},train:'one',alight:1,on:[],plat:G2(2001,['dad','mom','wl','yt','hy','py','pd'],[['lolo!bride'],['mz!groom']]),year:'2001 · 新家人',title:'新家人：名璋。',sub:'大家先下車，LOLO 和名璋一起出現在前方月台。'},
+  // 1993：怡婷結婚，第一位新家人翰毅上車（座位 6）
+  {key:'1993',st:{name:'1993',roman:'翰毅上車',prev:'← 1975',next:'1995 →'},train:'one',alight:1,on:[],plat:[['dad94',255],['mom94',420],['wl94',200],['lolo94',475],['yt94',310,514,null,'pop'],['hy94',365,514,null,'pop']],year:'1993 · 新家人',title:'新角色登場！姐夫 陳翰毅',sub:'我們家迎來了第一位新成員。'},
+  {key:'1993',board:1,on:[1,2,3,4,5,6],tag:{seat:6,name:'翰毅'},title:'歡迎姐夫翰毅加入！',sub:'車上 6 個人了。'},
+  // 1995：第一位孫子培元出生（怡婷家，座位 7）；全家 6 人下車，寶寶出現在怡婷與翰毅中間
+  {key:'1995',st:{name:'1995',roman:'培元上車',prev:'← 1993',next:'1998 →'},train:'one',alight:1,on:[],plat:G2(1995,['dad','mom','wl','lolo'],['yt',['py'],'hy']),year:'1995 · 新乘客',title:'第一個孫子出生了：陳培元。',sub:''},
+  {key:'1995',board:1,on:[1,2,3,4,5,6,7],tag:{seat:7,name:'培元'},title:'元元上車了。',sub:'就在這年，老爸老媽正式升格為阿公阿嬤。車上７個人了'},
+  // 1998 → 2025：人多了，大家站到列車前方的長月台，從自己的窗下車、回自己的窗上車
+  {key:'1998',st:{name:'1998',roman:'培典上車',prev:'← 1995',next:'2001 →'},train:'one',alight:1,on:[],plat:G2(1998,['dad','mom','wl','lolo'],['yt','py',['pd'],'hy']),year:'1998 · 新乘客',title:'第二個孫子：陳培典。',sub:'培元 3 歲，當上了哥哥。'},
+  {key:'1998',board:1,on:R(8),tag:{seat:8,name:'培典'},title:'典典上車了。',sub:'車上 8 個人了。'},
+  {key:'2001',st:{name:'2001',roman:'名璋上車',prev:'← 1998',next:'2002 →'},train:'one',alight:1,on:[],plat:G2(2001,['dad','mom','wl','yt','hy','py','pd'],[['lolo!bride'],['mz!groom']]),year:'2001 · 新家人',title:'迎接第二位新成員：陳名璋。',sub:''},
   {key:'2001',board:1,on:R(9),tag:{seat:9,name:'名璋'},title:'名璋上車了。',sub:'車上 9 個人了。'},
-  {key:'2002',st:{name:'2002',roman:'敬凱上車',prev:'← 2001',next:'2004 →'},train:'one',alight:1,on:[],plat:G2(2002,['dad','mom','wl','yt','hy','py','pd'],['lolo',['jk'],'mz']),year:'2002 · 新乘客',title:'新乘客：敬凱。',sub:'LOLO 和名璋的第一個孩子。'},
-  {key:'2002',board:1,on:R(10),tag:{seat:10,name:'敬凱'},title:'敬凱上車了。',sub:'車上 10 個人了。'},
-  {key:'2004',st:{name:'2004',roman:'敬達上車',prev:'← 2002',next:'2008 →'},train:'one',alight:1,on:[],plat:G2(2004,['dad','mom','wl','yt','hy','py','pd'],['lolo','jk',['jd'],'mz']),year:'2004 · 新乘客',title:'新乘客：敬達。',sub:'敬凱 2 歲，當上了哥哥。媽媽也 60 歲了。'},
-  {key:'2004',board:1,on:R(11),tag:{seat:11,name:'敬達'},title:'敬達上車了。',sub:'車上 11 個人了。'},
-  {key:'2008',st:{name:'2008',roman:'淑娟、兆宸上車',prev:'← 2004',next:'2010 →'},train:'one',alight:1,on:[],plat:G2(2008,['dad','mom','yt','hy','py','pd','lolo','mz','jk','jd'],['wl',['zc'],['sj']]),year:'2008 · 新家人',title:'新家人：淑娟和兆宸。',sub:'偉立結婚了，淑娟和兆宸同一年加入。'},
+  {key:'2002',st:{name:'2002',roman:'敬凱上車',prev:'← 2001',next:'2004 →'},train:'one',alight:1,on:[],plat:G2(2002,['dad','mom','wl','yt','hy','py','pd'],['lolo',['jk'],'mz']),year:'2002 · 新乘客',title:'第三個孫子：陳敬凱。',sub:'LOLO 和名璋的第一個孩子。'},
+  {key:'2002',board:1,on:R(10),tag:{seat:10,name:'敬凱'},title:'凱凱上車了。',sub:'車上 10 個人了。'},
+  {key:'2004',st:{name:'2004',roman:'敬達上車',prev:'← 2002',next:'2008 →'},train:'one',alight:1,on:[],plat:G2(2004,['dad','mom','wl','yt','hy','py','pd'],['lolo','jk',['jd'],'mz']),year:'2004 · 新乘客',title:'第四個孫子：陳敬達。',sub:'凱凱 2 歲，當上了哥哥。'},
+  {key:'2004',board:1,on:R(11),tag:{seat:11,name:'敬達'},title:'達達上車了。',sub:'車上 11 個人了。'},
+  {key:'2008',st:{name:'2008',roman:'淑娟、兆宸上車',prev:'← 2004',next:'2010 →'},train:'one',alight:1,on:[],plat:G2(2008,['dad','mom','yt','hy','py','pd','lolo','mz','jk','jd'],[['wl!groom'],['sj!bride']]),wave:['wl','sj'],year:'2008 · 新家人',title:'偉立和淑娟結婚了。',sub:'新郎新娘一起向大家揮手。'},
+  {key:'2008',swap:1,plat:G2(2008,['dad','mom','yt','hy','py','pd','lolo','mz','jk','jd'],['wl',['zc'],'sj']),title:'一同迎接第五個孫子：李兆宸。',sub:'終於等來個姓李的孫子了～'}, // 點一下：換裝＋寶寶出現
   {key:'2008',board:1,on:R(13),tag:[{seat:12,name:'淑娟'},{seat:13,name:'兆宸'}],title:'淑娟和兆宸上車了。',sub:'車上 13 個人了。'},
-  {key:'2010',st:{name:'2010',roman:'兆鈞上車',prev:'← 2008',next:'2025 →'},train:'one',alight:1,on:[],plat:G2(2010,['dad','mom','yt','hy','py','pd','lolo','mz','jk','jd'],['wl','zc',['zj'],'sj']),year:'2010 · 新乘客',title:'新乘客：兆鈞。',sub:'兆宸 2 歲，當上了哥哥。'},
-  {key:'2010',board:1,on:R(14),tag:{seat:14,name:'兆鈞'},title:'兆鈞上車了。',sub:'車上 14 個人了。'},
+  {key:'2010',st:{name:'2010',roman:'兆鈞上車',prev:'← 2008',next:'2025 →'},train:'one',alight:1,on:[],plat:G2(2010,['dad','mom','yt','hy','py','pd','lolo','mz','jk','jd'],['wl','zc',['zj'],'sj']),year:'2010 · 新乘客',title:'第六個孫子李兆鈞。',sub:'兆宸 2 歲，當上了哥哥。'},
+  {key:'2010',board:1,on:R(14),tag:{seat:14,name:'兆鈞'},title:'兆鈞上車了。',sub:'這台火車已經坐滿14 個人了。'},
   // ── 互動遊戲第二站：孫子輩到齊之後。爸爸的經典台詞、新乘客（女婿）的觀察、孫子輩的爆料 ──
   {key:'2010',ov:'ovGame',stop:'第二站 · 大家眼中的阿公阿嬤'},
   {key:'2010',ov:'ovQuiz',q:'A01'},
@@ -397,25 +434,28 @@ const STEPS=[
   {key:'2010',ov:'ovQuiz',q:'C04'},
   {key:'2010',ov:'ovQuiz',q:'D05'},
   {key:'2010',ov:'ovQuiz',q:'D06'},
-  {key:'2025',st:{name:'2025',roman:'培典老婆上車',prev:'← 2010',next:'2027 →'},train:'one',alight:1,on:[],plat:G2(2025,['dad','mom','wl','sj','zc','zj','lolo','mz','jk','jd'],['yt','py',['pd!groom'],['pdw!bride'],'hy']),year:'2025 · 新家人',title:'最後一位乘客：培典老婆。',sub:'培典結婚了。'},
-  {key:'2025',board:1,on:R(15),tag:{seat:15,name:'培典老婆'},title:'全員到齊。',sub:'15 扇窗，全部亮了。'},
-  {key:'letter',st:ST.letter,train:'one',on:R(15),year:'互動站 · 範例',title:'第一封乘客來信',sub:'爸媽先猜，再撕開票根揭曉。'},
-  {key:'letter',ov:'ovRed'},
-  {key:'letter',ov:'ovRed',torn:true},
-  {key:'end',train:'one',on:R(15),year:'下一站 · 2027',title:'鑽石婚，60 週年。',sub:'15 扇窗全亮，列車開往 2027。'}
+  {key:'2025',st:{name:'2025',roman:'培典老婆上車',prev:'← 2010',next:'2026 →'},train:'one',alight:1,on:[],plat:G2(2025,['dad','mom','wl','sj','zc','zj','lolo','mz','jk','jd'],['yt','py',['pd!groom'],['pdw!bride'],'hy']),year:'2025 · 新家人',title:'就在去年我們又迎來了新乘客：培典老婆。',sub:'培典成為孫子輩第一個結婚的。'},
+  {key:'2025',board:1,on:R(15),tag:{seat:15,name:'培典老婆'},title:'列車成員持續增加中',sub:'阿公說：謝謝我的孫子們都參加，讓阿公阿嬤說說故事。'},
+  // 乘客來信範例站：LOLO 2026-10-28 說先拿掉，要恢復時把下面三行取消註解
+  // {key:'letter',st:ST.letter,train:'one',on:R(15),year:'互動站 · 範例',title:'第一封乘客來信',sub:'爸媽先猜，再撕開票根揭曉。'},
+  // {key:'letter',ov:'ovRed'},
+  // {key:'letter',ov:'ovRed',torn:true},
+  {key:'end',train:'one',extra:1,cruise:1,finale:1,on:R(15),year:'下一站 · 2036',title:'70週年鉑金婚',sub:'加開車廂，列車繼續開往 2036。'}
 ];
 // 每次轉場輪流：白天 → 傍晚 → 夜晚
 const MODES=['day','dusk','night'];
 let m=0;STEPS.forEach((s,i)=>{const p=STEPS[i-1];
-  if(i&&s.key!==p.key)m++;s.mode=MODES[m%3];
+  if(i&&s.key!==p.key&&s.key!=='tour')m++;s.mode=MODES[m%3];
   if(p&&s.key===p.key)for(const k of ['st','train','trains','on','year','title','sub'])if(s[k]===undefined)s[k]=p[k]; // 同一站沿用（月台人物不沿用）
   s.on=s.on||[];
   s.tags=+s.key>=1968; // 名牌從 1968 怡婷出生那站開始（之前只有爸媽，不需要）
+  const P=s.plat||[];s.wed=[...(Array.isArray(P)?P:[...P.back||[],...P.front||[]])].some(it=>SPEC([].concat(it)[0]).bottom==='gown')||!!(p&&s.key===p.key&&p.wed&&s.board); // 新人上車時彩帶還在 // 月台上有新娘＝結婚場景，掛愛心彩帶
   if(s.board||s.arrive)s.fresh=s.on.filter(x=>!p.on.includes(x)); // 這一步新亮的窗
 });
 // 介紹新成員的站一律白天（LOLO：新成員出現在夜裡顯得黯淡、不吉利）；開往這些站的路上先入夜，進站時天亮
-const NEWBIE=new Set(STEPS.filter(s=>s.tag).map(s=>s.key));
+const NEWBIE=new Set([...STEPS.filter(s=>s.tag).map(s=>s.key),'1967']); // 1967＝1966 結婚站，LOLO 指定白天
 STEPS.forEach(s=>{if(NEWBIE.has(s.key))s.mode='day'});
+STEPS.forEach(s=>{if(s.finale)s.mode='night'}); // 結尾用夜晚，金光比較明顯（LOLO 指定）
 const NEWNAMES={};STEPS.forEach(s=>{if(s.tag)NEWNAMES[s.key]=[].concat(s.tag).map(t=>t.name)});
 
 const $=id=>document.getElementById(id);
@@ -428,9 +468,9 @@ const slide=(el,from,to,ms,easing)=>el.animate([{transform:from},{transform:to}]
 // 列車：S=0.9 縮放，車輪壓在 y=548 的鐵軌上
 const S=.9,Y=548-108*S;
 const MOM='--blue:#7E2B2B;--line2:#5E1F1F';
-function car(sym,x,wins,w,style='',fresh=[],tag=null){ // 一節車廂；wins＝亮著的窗（1 起算）；fresh＝這一步新亮的窗；tag＝新乘客名牌
+function car(sym,x,wins,w,style='',fresh=[],tag=null,dl=null){ // dl(k)：自訂第 k 扇新窗亮起的延遲（秒） // 一節車廂；wins＝亮著的窗（1 起算）；fresh＝這一步新亮的窗；tag＝新乘客名牌
   let h=`<g class="tint"><use href="#${sym}" x="${x}" y="${Y}" width="${w*S}" height="${110*S}" style="${style}"/></g>`,g='',r='',t='';
-  for(const n of wins){const i=n-1,wx=x+(30+32*i)*S,wy=Y+38*S,k=fresh.indexOf(n),cls=k<0?'':` class="fresh" style="animation-delay:${k*Math.min(.12,.8/fresh.length)*T}s"`;
+  for(const n of wins){const i=n-1,wx=x+(30+32*i)*S,wy=Y+38*S,k=fresh.indexOf(n),cls=k<0?'':` class="fresh" style="animation-delay:${(dl?dl(k):k*Math.min(.12,.8/fresh.length))*T}s"`;
     r+=`<rect${cls} x="${wx}" y="${wy}" width="${26*S}" height="${24*S}" rx="2"/>`;
     g+=`<rect${cls} x="${wx-8}" y="${wy-8}" width="${26*S+16}" height="${24*S+16}" rx="8"/>`;
     const tl=[].concat(tag||[]),ti=tl.findIndex(o=>o.seat===n),tg=tl[ti];if(tg){const cx=wx+13*S,tw=Math.max(72,tg.name.length*18+16),dy=ti*36;t+=`<g class="fresh" style="animation-delay:${k*Math.min(.12,.8/fresh.length)*T}s"><rect x="${cx-tw/2}" y="${Y-30-dy}" width="${tw}" height="30" rx="15" fill="#FFD58A"/><path d="M${cx-7} ${Y-dy} L${cx} ${Y+9-dy} L${cx+7} ${Y-dy}Z" fill="#FFD58A"/><text x="${cx}" y="${Y-9-dy}" text-anchor="middle" class="s-sans" font-size="17" font-weight="900" fill="#1E2A44">${tg.name}</text></g>`}}
@@ -444,14 +484,70 @@ const TRAINS={
   // 所有列車：車廂在左、車頭在右，由左往右開
   apart:s=>car('short',80,seat(s.on,1),220)+loco(278)+label(179,'爸爸')+car('short',822,seat(s.on,2),220,MOM)+loco(1020,MOM)+label(921,'媽媽'),
   meet:s=>`<g>${car('short',432,seat(s.on,1),220,'',seat(s.fresh,1))+label(531,'爸爸')}</g><g data-t="dadLoco">${loco(630)}</g><g data-t="mom">${car('short',812,seat(s.on,2),220,MOM,seat(s.fresh,2))+loco(1010,MOM)+label(911,'媽媽')}</g>`,
+  dad:s=>car('short',432,seat(s.on,1),220)+loco(630)+(s.on.includes(1)?label(531,'爸爸'):''), // 爸爸下車後，車上不再掛名字 // 1958 爸爸一個人到臺北
+  wed:s=>car('short',432,seat(s.on,1),220)+loco(630)+(s.on.includes(1)?label(531,'爸爸'):'')+(s.left?'':`<g data-t="mom">${car('short',812,seat(s.on,2),220,MOM)+loco(1010,MOM)+(s.on.includes(2)?label(911,'媽媽'):'')}</g>`), // 結婚：兩台車一起進站，兩人下車後媽媽的車開走
+  visit:s=>`<g class="visit">${car('short',432,seat(s.on,1),220)+loco(630)+label(531,'爸爸')}</g>`, // 遠距離戀愛：爸爸的車一直往水里開
   together:s=>car('short',432,s.on,220,'',s.fresh||[])+loco(630)+label(531,'爸爸 · 媽媽'), // 1966 上車後：兩人同坐藍色列車
   pair:s=>(s.trains.dad?`<g data-t="dad">${car('short',262,seat(s.on,1),220,'',seat(s.fresh,1))+loco(460)+label(361,'爸爸')}</g>`:'')
         +(s.trains.mom?`<g data-t="mom">${car('short',712,seat(s.on,2),220,MOM,seat(s.fresh,2))+loco(910,MOM)+label(811,'媽媽')}</g>`:''),
-  one:s=>car('car',500,s.on,540,'',s.fresh||[],s.tag)+loco(986)
+  one:s=>(s.extra?`<g data-t="extra2">${car('short',104,s.dark?[]:R(5),220,'',s.lightUp?R(5).reverse():[],null,k=>1.5+k*.3)}</g><g data-t="extra">${car('short',302,s.dark?[]:R(5),220,'',s.lightUp?R(5).reverse():[],null,k=>k*.3)}</g>`:'')+car('car',500,s.on,540,'',s.fresh||[],s.tag)+loco(986) // extra：後面加開一節空車廂（窗暗，等未來的乘客）
 };
 
 // 車站：一站時在左邊原位；兩站並排時各縮 0.75。月台面一律在 y=500
 const LAYOUT={1:[{x:150,k:1}],2:[{x:180,k:.75},{x:760,k:.75}]};
+// 站長宿舍：依澄石新天畝現況照片（黑瓦日式木屋、灰色雨槽、深色直條木牆、黃色格子門、木平台）；地面基準 y=185
+const DORM=(()=>{const tiles=[38,47,56,65,74].map((y,i)=>{const L=34+(84-y)*1.5+6,R=512-(84-y)*1.43-6;return `<path d="M${L} ${y}H${R}" stroke="#2E1F17" stroke-width="1.6"/><path d="M${L} ${y+4}H${R}" stroke="#7A5A44" stroke-width="5" stroke-dasharray="1.6 9" stroke-dashoffset="${i*5}"/>`}).join('');
+ const lat=(x,w)=>`<rect x="${x}" y="110" width="${w}" height="50" fill="#F1E3B4"/><path d="M${x+w/3} 110v50M${x+w*2/3} 110v50M${x} 122h${w}M${x} 134h${w}M${x} 146h${w}" stroke="#B9852F" stroke-width="1.5"/><rect x="${x}" y="110" width="${w}" height="50" fill="none" stroke="#C98F2C" stroke-width="3.4"/>`;
+ const box=(x,y,w,h)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#3F3027"/><path d="M${x+w/3} ${y}v${h}M${x+w*2/3} ${y}v${h}" stroke="#2A201A" stroke-width="1.4"/>`;
+ const lamp=(x,y)=>`<rect x="${x}" y="${y}" width="17" height="19" fill="#FFF6DC" stroke="#4A3428" stroke-width="1.6"/><rect x="${x-3}" y="${y+19}" width="23" height="5" fill="#6E4A32"/>`;
+ return `<g stroke="#2E2420" stroke-width="2" stroke-linejoin="round">
+  <path d="M-34 96 L6 66 H104 L132 96Z" fill="#4A3226"/><rect x="-22" y="96" width="120" height="58" fill="#5A4636"/><rect x="-6" y="108" width="36" height="46" fill="#E7D39A"/><rect x="40" y="108" width="40" height="46" fill="#3B2C24"/><path d="M12 108v46M60 108v46" stroke-width="1.2"/>
+  <rect x="56" y="88" width="430" height="74" fill="#5D5C47"/>
+  <path d="M34 84 L118 28 H432 L512 84Z" fill="#4A3226"/>
+  <rect x="112" y="21" width="326" height="9" rx="2" fill="#35241B"/><path d="M112 21l-9-6 3 12M438 21l9-6-3 12" fill="#35241B"/>
+ </g>${tiles}
+ <g stroke="#2E2420" stroke-width="2" stroke-linejoin="round">
+  <path d="M60 90V160M84 90V160M108 90V160M410 90V160M432 90V160M456 90V160" stroke="#47462F" stroke-width="1.8"/>
+  <rect x="24" y="82" width="500" height="8" rx="3" fill="#878E93"/>
+  <rect x="138" y="93" width="254" height="16" fill="#3A2B22"/><g fill="#F6F1E4" stroke-width="1"><rect x="172" y="95" width="88" height="12"/><rect x="272" y="95" width="88" height="12"/></g><path d="M186 95v12M200 95v12M214 95v12M228 95v12M242 95v12M286 95v12M300 95v12M314 95v12M328 95v12M342 95v12" stroke="#7A5A3A" stroke-width="1"/>
+  <rect x="138" y="108" width="254" height="52" fill="#2C211C"/>
+ </g>
+ ${lat(142,38)}<rect x="182" y="110" width="44" height="50" fill="#F4EEDC" stroke="#C98F2C" stroke-width="3"/>${lat(232,40)}${lat(274,40)}<rect x="318" y="110" width="28" height="50" fill="#2C211C"/><rect x="326" y="118" width="14" height="24" fill="#BFD6D8"/>${lat(350,40)}
+ <g stroke="#2E2420" stroke-width="2" stroke-linejoin="round">
+  <rect x="4" y="100" width="536" height="7" rx="3" fill="#7F8A7E"/>
+  <rect x="96" y="106" width="9" height="56" fill="#3F3027"/><rect x="384" y="106" width="9" height="56" fill="#3F3027"/>
+  <path d="M478 106 L500 172 H490 L468 106Z" fill="#3F3027"/>
+  <path d="M526 90 V118 H516 V170" fill="none" stroke="#9AA1A4" stroke-width="5"/>
+  <rect x="-40" y="158" width="582" height="12" fill="#4F3E31"/><path d="M-40 164H542" stroke="#3A2C23" stroke-width="1"/>
+  ${[-30,60,170,300,420,520].map(x=>`<rect x="${x}" y="170" width="11" height="16" fill="#2F2620"/>`).join('')}
+  ${box(150,146,34,40)}${box(444,142,38,46)}${lamp(112,134)}${lamp(304,134)}
+ </g></g>`})();
+// 車埕車站（只用在阿公講古第一頁）：依 LOLO 提供的老照片復刻（水泥平頂、四面紅字牌「站車埕車」由右往左讀、綠色雨庇、紅褐門窗、水塔、十字花台）
+const CHECHENG=`<path d="M-170 200 C-110 70 -30 -18 60 -6 C120 2 150 -28 220 -24 C310 -18 400 44 590 200Z" style="fill:var(--mtn2)"/><path d="M-170 200 C-110 70 -30 -18 60 -6 C120 2 150 -28 220 -24 C310 -18 400 44 590 200Z" fill="#2F5B3C" opacity=".42"/>
+  <path d="M100 66 Q230 96 420 28" fill="none" stroke="#2C2A28" stroke-width="1.2"/>
+  <g stroke="#3C4A36" stroke-width="3" fill="none"><path d="M10 128 Q5 70 12 22" stroke="#6F6450" stroke-width="4"/></g>
+  <g fill="#3F7A44"><path d="M12 22 Q-14 8 -36 26 Q-12 18 12 26Z"/><path d="M12 22 Q-6 -8 -30 -6 Q-8 2 10 26Z"/><path d="M12 22 Q20 -12 46 -8 Q26 0 14 26Z"/><path d="M12 22 Q38 6 58 24 Q34 18 12 26Z"/><path d="M12 24 Q8 42 -10 52 Q0 38 10 24Z"/><path d="M12 24 Q20 42 36 50 Q26 36 14 24Z"/></g>
+  <g stroke="#4A3428" stroke-width="2">
+    <rect x="58" y="60" width="62" height="70" fill="#9E9B91"/>
+    <rect x="20" y="66" width="32" height="56" rx="4" fill="#C9D3D8"/><ellipse cx="36" cy="66" rx="16" ry="6" fill="#DDE4E7"/><rect x="20" y="86" width="32" height="12" fill="#3F7FB0"/>
+    <path d="M130 66H402V130H130Z" fill="#B5B2A8"/>
+    <rect x="0" y="130" width="134" height="70" fill="#C9C5B9"/><rect x="134" y="132" width="20" height="68" fill="#67645C"/>
+    <rect x="150" y="136" width="250" height="64" fill="#B9B5A9"/>
+    <rect x="-10" y="120" width="150" height="11" fill="#8F8C82"/>
+    <rect x="124" y="128" width="284" height="10" fill="#4F7A5B"/>
+    <rect x="14" y="142" width="26" height="58" fill="#4B3B33"/>
+    <rect x="52" y="146" width="40" height="28" fill="#2F2B2A"/><path d="M52 146h40v28h-40ZM65 146v28M79 146v28M52 160h40" fill="none" stroke="#9B3B33" stroke-width="2.6"/>
+    <rect x="104" y="150" width="12" height="9" fill="#F6F1E6" stroke-width="1"/>
+    <g fill="#CFDDDC"><rect x="244" y="142" width="80" height="58" fill="#3C3836"/><rect x="326" y="142" width="70" height="58" fill="#3C3836"/></g>
+    <g fill="none" stroke="#8B3A33" stroke-width="3"><rect x="244" y="142" width="80" height="58"/><rect x="326" y="142" width="70" height="58"/><path d="M270 142v58M297 142v58M360 142v58M244 164h80M326 164h70"/></g>
+    <g fill="#B7CDD0" stroke="none"><rect x="247" y="145" width="21" height="17"/><rect x="272" y="145" width="23" height="17"/><rect x="299" y="145" width="23" height="17"/><rect x="329" y="145" width="29" height="17"/><rect x="362" y="145" width="32" height="17"/></g>
+  </g>
+  <path d="M148 68v60M172 68v22M214 68v60M262 68v14M322 68v60M388 68v30M72 62v40M100 62v66M12 132v30M124 134v40" stroke="#8E8B80" stroke-width="3" opacity=".55"/><path d="M130 72H402M58 66H120" stroke="#D3D0C6" stroke-width="3"/>
+  <path d="M124 133H408" stroke="#2E4F3A" stroke-width="1.4" stroke-dasharray="5 4"/>
+  ${[['站',164],['車',226],['埕',288],['車',350]].map(([c,x])=>`<rect x="${x-17}" y="76" width="34" height="40" fill="#F6F1E6" stroke="#3A2A22" stroke-width="2.4"/><text x="${x}" y="106" text-anchor="middle" class="s-serif" font-size="27" font-weight="900" fill="#B3261E">${c}</text>`).join('')}
+  <g stroke="#4A3428" stroke-width="2"><circle cx="172" cy="150" r="26" fill="#4F8B4C"/><circle cx="154" cy="166" r="18" fill="#5C9A55"/><circle cx="210" cy="160" r="26" fill="#C7B84A"/><circle cx="194" cy="172" r="16" fill="#8FAE48"/><path d="M231 200 C218 170 224 142 236 112 C248 142 254 170 241 200Z" fill="#2F5B3C"/></g>
+  <rect x="136" y="186" width="124" height="14" fill="#F1EDE2" stroke="#4A3428" stroke-width="2"/>
+  <g stroke="#2C2A28" stroke-width="3">${[148,168,188,208,228,248].map(x=>`<path d="M${x-5} 193h10M${x} 188v10"/>`).join('')}</g>`;
 function stationSVG(st,{x,k},slot,n){
   const yr=/^\d{4}$/.test(st.name),pl=n>1?[-260,820]:[-150,620]; // 臺北以後的站牌＝年份（時光機）
   return `<g data-slot="${slot}"><g transform="translate(${x} ${500-200*k}) scale(${k})">
@@ -482,13 +578,14 @@ function nameTag(k,x,feet=500,ps=PS,lift=0,below=false){const w=WHO.find(([re])=
   return `<g class="ptint"><rect x="${x-tw/2}" y="${top-26}" width="${tw}" height="22" rx="11" fill="${w[2]}" stroke="#FFFFFF" stroke-width="1.5"/><path d="M${x-5} ${top-4} L${x} ${top+2} L${x+5} ${top-4}Z" fill="${w[2]}"/><text x="${x}" y="${top-10}" text-anchor="middle" class="s-sans" font-size="13" font-weight="700" fill="#FFFFFF">${w[1]}</text></g>`}
 const SEAT={dad:1,mom:2,yt:3,wl:4,lolo:5,hy:6,py:7,pd:8,mz:9,jk:10,jd:11,sj:12,zc:13,zj:14,pdw:15};
 const winX=n=>500+(43+32*(n-1))*S; // 長車廂第 n 扇窗的中心 x
-function person(k,x,feet,ps,f,t,extra,tag){return `<g data-k="${k}" data-x="${x}" data-from="${f}" data-to="${t}"${extra}><g class="ptint" transform="translate(${x-60*ps} ${feet-210*ps}) scale(${ps})">${fig(SPEC(k))}</g>${tag}</g>`}
+function person(k,x,feet,ps,f,t,extra,tag){return `<g data-k="${k}" data-x="${x}" data-from="${f}" data-to="${t}"${extra}><g class="sw"><g class="ptint" transform="translate(${x-60*ps} ${feet-210*ps}) scale(${ps})">${fig(SPEC(k))}</g></g>${tag}</g>`}
 function platHTML(s){
   const P=s.plat||[];let out='';
-  const fx=k=>{const w=WHO.find(([re])=>re.test(k));return w&&NEWNAMES[s.key]?.includes(w[1])?(SPEC(k).stage==='baby'?' class="bounce"':' class="wave"'):''}; // 新成員：嬰兒上下跳、大人招手
+  const fx=k=>{const w=WHO.find(([re])=>re.test(k));return w&&(NEWNAMES[s.key]?.includes(w[1])||s.wave?.includes(k.split(/[@!]/)[0]))?(SPEC(k).stage==='baby'?' class="bounce"':' class="wave"'):''}; // 新成員：嬰兒上下跳、大人招手
   if(Array.isArray(P)){ // 舊式：全部站在車站前的月台
-    P.forEach(([k,x,from,to,pop])=>{const f=`translateX(${(from??DOOR)-x}px)`,t=`translateX(${(to??from??DOOR)-x}px)`;
-      out+=person(k,x,500,PS,f,t,(pop?' data-pop="1"':'')+fx(k),s.tags?nameTag(k,x):'')});return out}
+    P.forEach(([k,x,from,to,pop],i)=>{const f=`translateX(${(from??DOOR)-x}px)`,t=`translateX(${(to??from??DOOR)-x}px)`,sp=SPEC(k),ps=PS*(sp.scale||1);
+      const hearts=sp.anim==='fan'?[0,1].map(j=>`<path class="heart" style="animation-delay:${(i*.7+j*1.2)%2.4}s" fill="#E5546A" d="M${x+(j?14:-12)} ${500-160*ps} c0 -5 -7 -5 -7 0 c0 4 7 7 7 10 c0 -3 7 -6 7 -10 c0 -5 -7 -5 -7 0Z"/>`).join(''):'';
+      out+=person(k,x,500,ps,f,t,(pop?' data-pop="1"':'')+(sp.anim?` class="${sp.anim}" style="--d:${i}"`:fx(k)),(s.tags?nameTag(k,x):'')+hearts)});return out}
   const B=P.back||[],F=P.front||[],nb=B.length,psb=nb>6?.52:PS,gb=Math.min(58,285/((nb-1)||1)),xb=nb>1?327.5-gb*(nb-1)/2:330;
   if(F.length)out+=`<g class="tint" data-strip="1"><rect x="0" y="596" width="1200" height="79" fill="#D9CDB4"/><rect x="0" y="596" width="1200" height="5" fill="#E8C14A"/></g>`;
   B.forEach(([k,pop],i)=>{const x=xb+gb*i,f=`translateX(${DOOR-x}px)`; // 後方：從車門走出來
@@ -498,11 +595,32 @@ function platHTML(s){
   F.forEach(([k,pop],i)=>{const x=xf+gf*i,id=k.split(/[@!]/)[0],f=`translate(${winX(SEAT[id])-x}px,-110px)`; // 前方：從自己的窗下來
     out+=person(k,x,648,PF,f,f,' data-grp="front"'+(pop?' data-pop="1"':'')+fx(k),s.tags?nameTag(k,x,648,PF,0,true):'')});
   return out}
-const people=()=>[...$('plat').querySelectorAll(':scope>[data-k]')],strip=()=>$('plat').querySelector('[data-strip]');
-function setCap(s){if(s.year!==undefined){$('cYear').textContent=s.year;$('cTitle').textContent=s.title;$('cSub').textContent=s.sub}}
-const OVS=['ovCover','ovBlue','ovRed','ovGame','ovQuiz'];
+const people=()=>[...$('platB').children,...$('plat').querySelectorAll(':scope>[data-k]')],strip=()=>$('plat').querySelector('[data-strip]');
+// 車站月台（後方）的人放到列車後面那層；只有前方長月台的人留在列車前面
+function setPlat(s,fx=1){$('plat').innerHTML=platHTML(s);
+  $('platB').replaceChildren(...$('plat').querySelectorAll(':scope>[data-k]:not([data-grp="front"])'));if(fx)petals()}
+function petals(){ // 轉場時要等人都站定位才呼叫
+  const ppl=people(),bride=ppl.find(g=>SPEC(g.dataset.k).bottom==='gown');
+  // 新郎＝離新娘最近、別胸花的人（主婚的爸爸也別胸花，所以不能只找第一個）
+  if(bride){const front=bride.dataset.grp==='front',feet=front?648:500,ps=front?PS*1.5:PS, // 撒花瓣：只落在新郎新娘身上，視線集中在主角
+    groom=ppl.filter(g=>g.dataset.grp===bride.dataset.grp&&SPEC(g.dataset.k).acc?.includes('corsage')).sort((a,b)=>Math.abs(a.dataset.x-bride.dataset.x)-Math.abs(b.dataset.x-bride.dataset.x))[0],cx=(+bride.dataset.x+(groom?+groom.dataset.x:+bride.dataset.x))/2,
+    top=feet-630*ps,w=((groom?Math.abs(groom.dataset.x-bride.dataset.x)/2:0)+60*ps)*3,C=['#F7B6C2','#FFFFFF','#F19BA8','#FBD3DA'];let h='';
+    for(let i=0;i<30;i++){const x=cx-w+((i*37)%31)/30*2*w,d=6+(i%4); // 落差變高，時間也拉長，維持慢慢飄
+      h+=`<g class="petal" style="--fall:${630*ps}px;animation-duration:${d}s;animation-delay:${-(i*.55)%d}s"><ellipse cx="${x}" cy="${top}" rx="${10*ps}" ry="${6*ps}" fill="${C[i%4]}" stroke="#E58A9C" stroke-width="1" transform="rotate(${i*40} ${x} ${top})"/></g>`}
+    bride.insertAdjacentHTML('beforeend',`<g style="animation:fadein 1s both">${h}</g>`)}
+}
+// 字幕位置：平常在左上；結尾頁（finale）置中放大，當片尾標題
+const CAP={norm:[[56,82,24],[56,144,54],[56,192,25],'start'],fin:[[600,215,30],[600,305,92],[600,362,30],'middle']};
+function setCap(s){if(s.year!==undefined){$('cYear').textContent=s.year;$('cTitle').textContent=s.title;$('cSub').textContent=s.sub;
+  const L=s.finale?CAP.fin:CAP.norm;['cYear','cTitle','cSub'].forEach((id,i)=>{const e=$(id);e.setAttribute('x',L[i][0]);e.setAttribute('y',L[i][1]);e.setAttribute('font-size',L[i][2]);e.setAttribute('text-anchor',L[3])});
+  $('cYear').setAttribute('letter-spacing',s.finale?8:4);
+  const t=$('cTitle'),w=t.getComputedTextLength(),max=s.finale?1080:960;if(w>max)t.setAttribute('font-size',Math.floor(L[1][2]*max/w));
+  const u=$('cSub'),uw=u.getComputedTextLength();if(uw>max)u.setAttribute('font-size',Math.floor(L[2][2]*max/uw))}} // 長標題自動縮小 // 長標題自動縮小，不壓到右上角的太陽
+function shuttle(){const g=train.querySelector('.visit');if(!g||reduce)return;let x=-330,d=2600;
+  (async()=>{while(g.isConnected){const nx=-x;await g.animate([{transform:`translateX(${x}px)`},{transform:`translateX(${nx}px)`}],{duration:d,easing:'ease-in-out',fill:'forwards'}).finished.catch(()=>{});x=nx;d=Math.max(600,d*.8)}})()}
+const OVS=['ovCover','ovBlue','ovRed','ovGame','ovQuiz','ovTour'];
 function paint(s){ // 直接套用某一步的狀態（不做動畫）
-  $('plat').innerHTML=platHTML(s);
+  setPlat(s);
   stage.dataset.mode=s.mode;
   train.innerHTML=TRAINS[s.train](s);
   const sts=[].concat(s.st||[]);
@@ -511,7 +629,8 @@ function paint(s){ // 直接套用某一步的狀態（不做動畫）
   setCap(s);
   cap.style.opacity=s.year||s.ov?1:0;
   for(const id of OVS)$(id).classList.toggle('off',s.ov!==id);
-  quiz(s);
+  quiz(s);tour(s);
+  shuttle();
   $('redTicket').classList.toggle('torn',!!s.torn);
 }
 
@@ -557,6 +676,44 @@ const nameOf=id=>WHO.find(([re])=>re.test(id));
 // 人頭剪影：同一張人偶畫兩層，上層塗成剪影色（不畫道具，免得一眼被認出），揭曉時淡出
 const bust=(id,i)=>{const sp=LOOK(id,2026);return `<svg viewBox="-6 36 132 112" aria-hidden="true"><defs><filter id="sil${i}"><feFlood flood-color="#3A4566"/><feComposite in2="SourceAlpha" operator="in"/></filter></defs>
   <g class="face">${fig(sp)}</g><g class="shadow" filter="url(#sil${i})">${fig(sp,['body','bottom','top','hair','acc'])}</g></svg>`};
+// ── 阿公講古 ──
+const KID=(c='#F7F4EC')=>({...LOOK('dad',1950),topColor:c}); // 小時候的爸爸與同伴
+const puppet=(sp,x,feet,ps,cls='')=>`<g class="${cls}"><g transform="translate(${x-60*ps} ${feet-210*ps}) scale(${ps})">${fig(sp)}</g></g>`;
+const sheep=(x,y,k,c)=>`<g class="graze ${c}"><g transform="translate(${x} ${y}) scale(${k})" stroke="#4A3428" stroke-width="2.4"><path d="M-18 12v14M16 12v14" /><path d="M-34 0c-6-14 10-22 18-16 6-10 24-8 28 0 12-4 22 8 16 18 4 12-10 20-20 14-8 8-24 6-28-2-12 2-20-6-14-14Z" fill="#FBF8F1"/><path d="M36-8c8-8 24-4 24 8 0 10-14 14-22 8Z" fill="#E6DCCD"/><circle cx="50" cy="-3" r="2.4" fill="#3A2A22" stroke="none"/></g></g>`;
+const SKY=g=>`<defs><linearGradient id="tSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A3D2EA"/><stop offset="1" stop-color="#F4ECDA"/></linearGradient></defs><rect width="1200" height="675" fill="url(#tSky)"/><circle cx="1090" cy="86" r="42" fill="#F6C667"/><path d="M0 330 L180 230 L340 310 L520 210 L720 320 L900 240 L1200 330 V675 H0Z" fill="#A7C4AE"/><path d="M0 380 L240 300 L470 370 L700 290 L960 380 L1200 320 V675 H0Z" fill="#86AB90"/><rect y="${g}" width="1200" height="${675-g}" fill="#9DBB7F"/>`;
+const bld=(x,y,w,h,wall,roof,label)=>`<g stroke="#4A3428" stroke-width="2.4"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${wall}"/><path d="M${x-14} ${y} L${x+w/2} ${y-54} L${x+w+14} ${y}Z" fill="${roof}"/><rect x="${x+w/2-16}" y="${y+h-58}" width="32" height="58" fill="#6E4A32"/></g><text x="${x+w/2}" y="${y+34}" text-anchor="middle" class="s-sans" font-size="22" font-weight="900" fill="#3A1F1A">${label}</text>`;
+const TOUR=[
+ {say:'這裡是阿祖當站長的宿舍，是阿公成長、養一群羊的地方。現在重建成咖啡餐廳，房屋結構和以前完全相同。',
+  scene:()=>SKY(430)+`<g style="--mtn2:#86AB90" transform="translate(40 240) scale(.98)">${CHECHENG}</g><g transform="translate(432 388) scale(.85)">${DORM}</g>`
+   +sheep(120,628,.95,'b')+sheep(470,612,.9,'')+sheep(640,632,1,'b')+sheep(345,632,1.05,'c')+sheep(810,618,.9,'')+puppet(KID(),250,610,.82)},
+ {say:'我們住的德川旅館，媽媽上班的水里電信局就在 500 公尺遠；爸爸念了 6 年的小學，也只在 800 公尺遠。',
+  scene:()=>SKY(470)+`<rect x="30" y="520" width="700" height="46" fill="#8C8578"/><path d="M30 543H730" stroke="#F4EAD2" stroke-width="3" stroke-dasharray="20 18"/>`
+   +bld(30,350,160,120,'#E8DFCC','#8E2A3A','電信局')+bld(220,350,160,120,'#F4EAD2','#3E5F96','德川旅館')+bld(515,350,150,120,'#F1E2BF','#B8693F','小學')
+   +`<g class="s-sans" font-size="24" font-weight="900" fill="#fff" text-anchor="middle" stroke="#1E2A44" stroke-width="5" paint-order="stroke"><text x="205" y="604">← 500 公尺</text><text x="450" y="604">800 公尺 →</text></g><text x="60" y="655" class="s-sans" font-size="17" fill="#1E2A44">距離示意圖</text>`
+   +puppet(PEOPLE.mom66,70,520,.78,'bob')+puppet(KID(),700,520,.78,'bob')},
+ {say:'小時候的夏天，每天都在橋下游泳玩水。大家還比賽，從橋面跳下水，又從拱型橋墩頂跳下！',
+  scene:()=>SKY(560)+`<path d="M0 300 C120 190 260 215 380 230 C520 170 700 220 860 250 C1000 230 1100 260 1200 290 V520 H0Z" fill="#3F7A44"/><path d="M0 360 C150 300 280 340 420 330 C600 300 820 340 1200 330 V520 H0Z" fill="#2F6238"/><g fill="#57934F"><circle cx="90" cy="290" r="46"/><circle cx="660" cy="300" r="52"/><circle cx="700" cy="400" r="58"/><circle cx="20" cy="400" r="50"/></g>
+   <rect y="480" width="1200" height="195" fill="#5FA9C8"/><path d="M40 560q30-12 60 0t60 0M620 590q30-12 60 0t60 0M240 640q30-12 60 0t60 0M780 540q30-12 60 0t60 0" fill="none" stroke="#CDE9F2" stroke-width="4"/>
+   <path d="M200 492V400H480V492ZM40 492V400H182V492ZM498 492V400H640V492Z" fill="#23402C"/>
+   <path fill-rule="evenodd" d="M30 262H650V492H30ZM220 492V470Q224 372 340 372Q456 372 460 470V492ZM46 492V432Q46 396 75 396Q104 396 104 432V492ZM118 492V432Q118 396 147 396Q176 396 176 432V492ZM504 492V432Q504 396 533 396Q562 396 562 432V492ZM576 492V432Q576 396 605 396Q634 396 634 432V492Z" fill="#A9A595" stroke="#4A3428" stroke-width="2.6"/>
+   <path d="M206 492V470Q210 356 340 356Q470 356 474 470V492" fill="none" stroke="#C4BFB0" stroke-width="15"/><path d="M198 492V470Q202 348 340 348Q478 348 482 470V492" fill="none" stroke="#4A3428" stroke-width="1.6"/>
+   <g fill="#969282" stroke="#7D7969" stroke-width="1.5"><rect x="46" y="276" width="68" height="62"/><rect x="122" y="276" width="68" height="62"/><rect x="490" y="276" width="68" height="62"/><rect x="566" y="276" width="68" height="62"/></g>
+   <g fill="#35352F"><rect x="206" y="276" width="44" height="24"/><rect x="262" y="276" width="44" height="24"/><rect x="318" y="276" width="44" height="24"/><rect x="374" y="276" width="44" height="24"/><rect x="430" y="276" width="44" height="24"/></g>
+   <path d="M64 346v44M616 346v44M150 346v40M530 346v40M278 304v36M402 304v36" stroke="#868272" stroke-width="3" opacity=".6"/>
+   <rect x="20" y="250" width="640" height="14" fill="#8E8778" stroke="#4A3428" stroke-width="2"/>
+   <path d="M196 268c8 30-6 60 2 96M484 268c-8 30 6 60-2 96" fill="none" stroke="#4F8B4C" stroke-width="7" stroke-linecap="round"/>
+   <g stroke="#4A3428" stroke-width="2"><ellipse cx="60" cy="510" rx="26" ry="12" fill="#8E8A80"/><ellipse cx="620" cy="510" rx="26" ry="12" fill="#8E8A80"/><ellipse cx="410" cy="508" rx="28" ry="14" fill="#A7A296"/><ellipse cx="480" cy="518" rx="20" ry="11" fill="#8E8A80"/><ellipse cx="540" cy="506" rx="22" ry="12" fill="#B8B3A8"/><ellipse cx="240" cy="532" rx="16" ry="9" fill="#A7A296"/></g>`
+   +puppet(KID('#FFD58A'),130,250,.55,'jumper')+puppet(KID('#CFE3EE'),340,350,.55,'jumper b')
+   +`<ellipse class="splash" cx="176" cy="524" rx="52" ry="16" fill="#fff"/><ellipse class="splash b" cx="300" cy="524" rx="52" ry="16" fill="#fff"/>`
+   +`<g class="bob"><g transform="translate(560 531) scale(.46)"><clipPath id="tWat"><rect x="-30" y="0" width="180" height="150"/></clipPath><g clip-path="url(#tWat)">${fig(KID('#F7F4EC'))}</g></g><path d="M550 600h76" stroke="#CDE9F2" stroke-width="5"/></g>`}
+];
+function tour(s){
+  if(s.ov!=='ovTour')return;
+  const t=TOUR[s.t];
+  $('tourBox').innerHTML=`<svg class="scene" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${t.scene()}</svg>
+    <div class="tHead"><small>阿公講古 ${s.t+1} / ${TOUR.length}</small><b>${s.title}</b></div>
+    <div class="tSay">${t.say}</div><svg class="tGuide" viewBox="-10 40 140 175" role="img" aria-label="阿公">${fig(LOOK('dad',2026))}</svg>`;
+}
 function quiz(s){
   if(s.ov==='ovGame'){$('gStop').textContent=s.stop;$('gameTicket').classList.remove('torn');return}
   if(s.ov!=='ovQuiz')return;
@@ -583,13 +740,15 @@ async function next(){
     busy=true;const kids=people,A=(el,k,o)=>el.animate(k,{duration:o.d*T,delay:(o.w||0)*T,easing:o.e||'ease-out',fill:'forwards'}).finished;
     if(b.enter){                       // 旁邊滑進第二個車站，新人物淡入
       paint(b);const old=new Set(a.plat.map(p=>p[0]));
-      await Promise.all([A($('stns').querySelector('[data-slot="1"]'),[{transform:'translateX(500px)',opacity:0},{transform:'none',opacity:1}],{d:1200}),
-        ...kids().filter(g=>!old.has(g.dataset.k)).map(g=>A(g,[{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'none'}],{d:600,w:1000}))]);
+      const fresh=kids().filter(g=>!old.has(g.dataset.k));fresh.forEach(g=>{g.style.transition='none';g.style.opacity=0}); // 寶寶先藏起來（關掉淡出，立刻隱藏）
+      await A($('stns').querySelector('[data-slot="1"]'),[{transform:'translateX(500px)',opacity:0},{transform:'none',opacity:1}],{d:1200});
+      await Promise.all(fresh.map(g=>A(g,[{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'none'}],{d:700,w:200}).then(()=>{g.style.opacity='';g.style.transition=''})));
     }else if(b.grow){                  // 寶寶淡出，長大後的樣子淡入
-      await Promise.all(kids().map(g=>A(g,[{opacity:1},{opacity:0}],{d:500})));
+      const gone=!b.st?.[1]&&$('stns').querySelector('[data-slot="1"]'); // 這一步拿掉的車站（花壇）一起淡出
+      await Promise.all([...kids(),...(gone?[gone]:[])].map(g=>A(g,[{opacity:1},{opacity:0}],{d:500})));
       paint(b);await Promise.all(kids().map(g=>A(g,[{opacity:0,transform:'translateY(14px)'},{opacity:1,transform:'none'}],{d:800})));
     }else{                             // 列車開進來 → 人走進車門 → 窗亮
-      setCap(b);$('plat').innerHTML=platHTML({plat:[...b.plat,...b.boarders]});
+      setCap(b);setPlat({plat:[...b.plat,...b.boarders]});
       train.innerHTML=TRAINS[b.train]({...b,on:a.on,fresh:[]});
       await A(train.querySelector(`[data-t="${b.arrive}"]`),(b.arrive==='dad'?[{transform:'translateX(-900px)'},{transform:'none'}]:[{transform:'translateX(-420px)',opacity:0},{opacity:1,offset:.35},{transform:'none',opacity:1}]),{d:1800});
       const bk=new Set(b.boarders.map(p=>p[0]));
@@ -599,6 +758,7 @@ async function next(){
     busy=false;return}
   if(a.key===b.key&&b.board){          // 上車：月台的人走進車門，窗戶一扇扇亮起
     busy=true;
+    if(a.train!==b.train){await train.animate([{opacity:1},{opacity:0}],{duration:400*T,fill:'forwards'}).finished;train.innerHTML=TRAINS[b.train]({...b,on:[],fresh:[]});await train.animate([{opacity:0},{opacity:1}],{duration:500*T,fill:'forwards'}).finished}
     const ppl=people(),off=g=>b.approach?.[g.dataset.k]!=null?b.approach[g.dataset.k]-g.dataset.x:0;
     if(b.approach)await Promise.all(ppl.map(g=>g.animate([{transform:'none'},{transform:`translateX(${off(g)}px)`}],{duration:1200*T,easing:'ease-in-out',fill:'forwards'}).finished));
     await Promise.all(ppl.map((g,i)=>g.animate([{transform:`translateX(${off(g)}px)`,opacity:1},{opacity:1,offset:.7},{transform:g.dataset.to,opacity:0}],{duration:1300*T,delay:0,easing:'ease-in',fill:'forwards'}).finished));
@@ -607,33 +767,68 @@ async function next(){
       await train.querySelector('[data-t="mom"]').animate([{transform:'none'},{transform:'translateX(500px)',opacity:0}],{duration:1600*T,easing:'ease-in',fill:'forwards'}).finished;
     paint(b);busy=false;return}
   if(a.ov==='ovGame'&&b.ov==='ovQuiz'){busy=true;$('gameTicket').classList.add('torn');await wait(800);paint(b);busy=false;return} // 撕票根 → 遊戲開始
+  if(a.key===b.key&&b.swap){           // 同一站換裝：前方月台的人淡出 → 換成新造型淡入，新成員最後出現
+    busy=true;const fr=()=>people().filter(g=>g.dataset.grp==='front');
+    await Promise.all(fr().map(g=>g.animate([{opacity:1},{opacity:0}],{duration:400*T,fill:'forwards'}).finished));
+    paint(b);await Promise.all(fr().map(g=>g.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:700*T,delay:(g.dataset.pop?700:0)*T,fill:'both'}).finished));
+    busy=false;return}
   if(a.key===b.key){paint(b);return}   // 同一站：只換疊加層
   busy=true;                          // 轉場：車站滑出 → 換時段與列車 → 新車站滑入
   for(const id of OVS)$(id).classList.add('off');
   cap.style.opacity=0;
   stage.classList.add('moving');
   if(NEWBIE.has(b.key))stage.dataset.mode='night'; // 夜晚 → 進站時天亮
-  if(a.st)await slide(stnMove,'translateX(0)','translateX(-1400px)',1100,'ease-in');else await wait(500);
+  const out=(el,dx)=>el.animate([{transform:'none'},{transform:`translateX(${dx}px)`}],{duration:1100*T,easing:'ease-in',fill:'forwards'});
+  const exit=a.train!=='none'&&b.train==='none'&&out(train,1400); // 下一站沒有列車：列車往右開走
+  if(a.st)await Promise.all([slide(stnMove,'translateX(0)','translateX(-1400px)',1100,'ease-in'),...[...people(),strip()].filter(Boolean).map(g=>out(g,-1400).finished)]); // 月台上的人跟著車站一起離開
+  else await wait(500);
+  if(exit)await exit.finished;
   if(a.train!==b.train){train.animate([{opacity:1},{opacity:0}],{duration:350*T,fill:'forwards'});await wait(350)}
-  paint(b.alight?{...b,on:a.on,plat:[]}:b);cap.style.opacity=0;
+  const popIn=!b.alight&&b.plat?.length; // 車站停好後人物才出現
+  if(exit)exit.cancel();
+  paint(b.alight?{...b,on:b.arriveOn||a.on,plat:[],left:0}:b.extra?{...b,extra:0}:popIn?{...b,plat:[]}:b);cap.style.opacity=0;
   if(a.train!==b.train)train.animate([{opacity:0},{opacity:1}],{duration:500*T,fill:'forwards'});
+  if(b.drive)train.style.transform='translateX(-1400px)'; // drive：車站停好後，列車才從左邊開進站
   if(b.st)await slide(stnMove,'translateX(1400px)','translateX(0)',1300,'ease-out');else await wait(1400);
-  stage.classList.remove('moving');
-  cap.style.opacity=1;
+  stage.classList.toggle('moving',!!b.cruise); // 結尾頁：背景繼續捲動，列車還在往前開
+  if(b.drive){await train.animate([{transform:'translateX(-1400px)'},{transform:'none'}],{duration:2400*T,easing:'cubic-bezier(.2,.7,.3,1)'}).finished;train.style.transform=''}
+  if(!b.finale)cap.style.opacity=1;
+  if(b.finale){for(const id of ['cTitle','cSub'])Object.assign($(id).style,{transition:'none',opacity:0});cap.style.opacity=1; // 後兩行先藏好（不用淡出）才顯示字幕； 片尾：列車開著，「下一站 2036」→「70週年鉑金婚」→ 小字 依序浮現，最後才加掛車廂
+    const fade=(id,d=0)=>$(id).animate([{opacity:0},{opacity:1}],{duration:1400*T,delay:d*T,fill:'backwards'}).finished,t=$('cTitle');
+    await fade('cYear');await wait(400);
+    t.style.opacity='';t.style.transformBox='fill-box';t.style.transformOrigin='center'; // 標題重磅登場：從大字砸下來、畫面一震、金光一閃
+    await t.animate([{opacity:0,transform:'scale(3)'},{opacity:1,transform:'scale(.92)',offset:.75},{opacity:1,transform:'scale(1)'}],{duration:650*T,easing:'cubic-bezier(.5,0,.75,0)'}).finished;
+    stage.animate([{transform:'translate(0,0)'},{transform:'translate(-10px,6px)'},{transform:'translate(9px,-5px)'},{transform:'translate(-6px,3px)'},{transform:'translate(3px,-2px)'},{transform:'none'}],{duration:450*T});
+    t.animate([{filter:'drop-shadow(0 0 0 #FFD58A)'},{filter:'drop-shadow(0 0 22px #FFD58A)',offset:.3},{filter:'drop-shadow(0 0 0 #FFD58A)'}],{duration:1400*T});
+    await wait(1200);$('cSub').style.opacity='';await fade('cSub');for(const id of ['cTitle','cSub'])$(id).style.transition='';await wait(600)}
+  if(b.extra){ // 第二節車廂從後面追上來接上
+    train.innerHTML=TRAINS[b.train]({...b,dark:1}); // 先接上暗的車廂
+    const e2=train.querySelector('[data-t="extra2"]');e2.style.visibility='hidden';
+    for(const [el,dx] of [[train.querySelector('[data-t="extra"]'),-560],[e2,-420]]){ // 兩節 5 座車廂，一節接一節追上來
+      el.style.visibility='';
+      await el.animate([{transform:`translateX(${dx}px)`},{transform:'none'}],{duration:2000*T,easing:'cubic-bezier(.2,.7,.3,1)'}).finished;
+      await train.animate([{transform:'translateX(5px)'},{transform:'none'}],{duration:260*T}).finished; // 接上時輕輕一頓
+    }
+    train.innerHTML=TRAINS[b.train]({...b,lightUp:1});await wait(3200); // 兩節都接上後，窗燈從前往後一盞盞亮起
+  }
+  if(popIn){setPlat(b,0);await Promise.all(people().map(g=>g.animate([{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'none'}],{duration:700*T,delay:200*T,fill:'both'}).finished));petals()}
   if(b.alight){
-    $('plat').innerHTML=platHTML(b);train.innerHTML=TRAINS[b.train](b);
+    setPlat(b,0);train.innerHTML=TRAINS[b.train]({...b,left:0});
     const ppl=people(),pop=ppl.filter(g=>g.dataset.pop),back=ppl.filter(g=>!g.dataset.pop&&g.dataset.grp!=='front'),front=ppl.filter(g=>!g.dataset.pop&&g.dataset.grp==='front');
-    const sb=Math.min(500,2500/(back.length||1)),t1=front.length?(back.length?(back.length-1)*sb+900:0):0,t2=t1+(front.length?(front.length-1)*400+900:(back.length-1)*sb+900);
+    // seq：一個人站定位，下一個才下車
+    const sb=b.seq?1400:Math.min(500,2500/(back.length||1)),t1=front.length?(back.length?(back.length-1)*sb+900:0):0,t2=t1+(front.length?(front.length-1)*400+900:(back.length-1)*sb+900);
     const IN=(g,d)=>g.animate([{transform:g.dataset.from,opacity:0},{opacity:1,offset:.2},{transform:'none',opacity:1}],{duration:1300*T,delay:d*T,easing:'ease-out',fill:'both'}).finished;
     if(strip())strip().animate([{opacity:0},{opacity:1}],{duration:600*T,delay:t1*T,fill:'both'});
     await Promise.all([...back.map((g,i)=>IN(g,i*sb)),...front.map((g,i)=>IN(g,t1+i*400)),
       ...pop.map(g=>g.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:700*T,delay:t2*T,fill:'both'}).finished)]);
+    petals(); // 人都站定位後才撒花瓣
+    if(b.left)await train.querySelector('[data-t="mom"]').animate([{transform:'none'},{transform:'translateX(500px)',opacity:0}],{duration:1600*T,easing:'ease-in',fill:'forwards'}).finished;
   }
   busy=false;
 }
 function go(n){ // 直接跳到第 n 步（0 起算），不播轉場
   if(busy||n<0||n>=STEPS.length)return;cur=n;setProg();
-  stnMove.getAnimations().forEach(x=>x.cancel());paint(STEPS[cur]);
+  stnMove.getAnimations().forEach(x=>x.cancel());paint(STEPS[cur]);stage.classList.toggle('moving',!!STEPS[cur].cruise);
 }
 const back=()=>go(cur-1); // 往回一律直接跳，不播轉場
 // 跳頁選單（測試用）：選項文字＝頁碼＋那一頁在做什麼；網址 #p23 可直接開在第 23 頁
