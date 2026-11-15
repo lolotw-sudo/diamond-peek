@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<meta name="robots" content="noindex,nofollow"><!-- 含問卷真實答案：不要從任何頁面連過來 -->
+<meta name="robots" content="noindex,nofollow"><!-- 含問卷真實答案：不要從任何頁面連到這裡 -->
 <title>人生列車</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Noto+Serif+TC:wght@400;900&family=Oswald:wght@500;600&display=swap">
 <style>
@@ -109,13 +109,24 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);margin:0;padd
 .tSay::after{content:"";position:absolute;top:100%;right:8cqw;border:1.2cqw solid transparent;border-top-color:#F4EAD2}
 .graze{animation:graze 2.6s ease-in-out infinite}.graze.b{animation-delay:-1s}.graze.c{animation-delay:-1.8s}
 @keyframes graze{50%{transform:translateY(-3px)}}
-.jumper{animation:jumpA 4.4s ease-in infinite}.jumper.b{animation:jumpB 4.4s ease-in -2.2s infinite}
-.splash{transform-box:fill-box;transform-origin:center;animation:splash 4.4s linear infinite}.splash.b{animation-delay:-2.2s}
-@keyframes jumpA{0%,32%{transform:none;opacity:1}58%{transform:translate(46px,270px) rotate(16deg);opacity:1}59%,92%{transform:translate(46px,270px);opacity:0}93%{transform:none;opacity:0}100%{transform:none;opacity:1}}
-@keyframes jumpB{0%,32%{transform:none;opacity:1}58%{transform:translate(-40px,168px) rotate(-14deg);opacity:1}59%,92%{transform:translate(-40px,168px);opacity:0}93%{transform:none;opacity:0}100%{transform:none;opacity:1}}
-@keyframes splash{0%,57%{opacity:0;transform:scale(.2)}60%{opacity:.95}80%,100%{opacity:0;transform:scale(1.5)}}
+.jumper{animation:jumpA 8.8s ease-in infinite}.jumper.b{animation:jumpB 8.8s ease-in -4.4s infinite}
+.splash{transform-box:fill-box;transform-origin:center;animation:splash 8.8s linear infinite}.splash.b{animation-delay:-4.4s}
+.swim{animation:swim 8.8s linear infinite}.swim.b{animation-delay:-4.4s}
+@keyframes jumpA{0%,22%{transform:none;opacity:1}38%{transform:translate(46px,270px) rotate(16deg);opacity:1}39%,92%{transform:translate(46px,270px);opacity:0}93%{transform:none;opacity:0}100%{transform:none;opacity:1}}
+@keyframes jumpB{0%,22%{transform:none;opacity:1}38%{transform:translate(-40px,168px) rotate(-14deg);opacity:1}39%,92%{transform:translate(-40px,168px);opacity:0}93%{transform:none;opacity:0}100%{transform:none;opacity:1}}
+@keyframes splash{0%,37%{opacity:0;transform:scale(.2)}40%{opacity:.95}55%,100%{opacity:0;transform:scale(1.5)}}
+/* 跳水後浮上來、揮手，再游出畫面 */
+@keyframes swim{0%,40%{opacity:0;transform:translateY(24px)}47%,56%{opacity:1;transform:none}92%{opacity:1;transform:translate(var(--sx),var(--sy))}92.1%,100%{opacity:0;transform:translate(var(--sx),var(--sy))}}
 .bob{animation:graze 1.8s ease-in-out infinite}
-@media (prefers-reduced-motion:reduce){.tGuide,.tSay,.graze,.jumper,.splash,.bob{animation:none}.splash{opacity:0}}
+.roam{animation:roam 12s linear infinite}.sFlip{transform-origin:13px 0;animation:face 12s linear infinite}
+.kidRun{animation:kidRun 12s linear infinite}.kidFlip{animation:kidFace 12s linear infinite}
+.hop{animation:graze .36s ease-in-out infinite}.herder .arm{transform:rotate(100deg);animation:flick .5s ease-in-out infinite alternate}
+@keyframes roam{0%,100%{transform:none}40%,50%{transform:translateX(230px)}90%{transform:none}}
+@keyframes face{0%,48%{transform:none}49.9%,98%{transform:scaleX(-1)}99.9%{transform:none}}
+@keyframes kidRun{0%{transform:none}40%{transform:translateX(230px)}50%{transform:translateX(810px)}90%{transform:translateX(600px)}100%{transform:none}}
+@keyframes kidFace{0%,49.9%{transform:scaleX(-1)}50%,99.9%{transform:none}100%{transform:scaleX(-1)}}
+@keyframes flick{from{transform:rotate(82deg)}to{transform:rotate(116deg)}}
+@media (prefers-reduced-motion:reduce){.tGuide,.tSay,.graze,.jumper,.splash,.swim,.bob,.roam,.sFlip,.kidRun,.kidFlip,.hop,.herder .arm{animation:none}.splash,.swim{opacity:0}}
 @media (prefers-reduced-motion:reduce){.petal{display:none}.stage svg *,.overlay,#caption{transition:none}.moving .far,.moving .near,.moving .sleep,.fan .sw,.heart,.torn #stub,.fresh,.blink,#qrows li,.hero svg,.heroName,.cameo,.cbubble,.wave .arm,.shake .arm,.shake .hb,.shake .hf,.bounce .ptint>*{animation:none}#gStub{transition:none}}
 </style>
 
@@ -224,20 +235,20 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);margin:0;padd
 
 <!-- 藍票：同一班車 -->
 <div class="overlay off" id="ovBlue">
-<svg class="ticket" viewBox="0 0 760 250" role="img" aria-label="紀念車票：車埕到花壇，阿公講古，1966">
+<svg class="ticket" viewBox="0 0 760 250" role="img" aria-label="紀念車票：阿公講古，車埕、水里、民族路橋三段故事">
   <g mask="url(#tmask)">
     <rect width="760" height="250" rx="4" fill="#1D3F7A"/>
     <rect x="0" y="22" width="540" height="206" fill="#F4EAD2"/>
     <use href="#loco" x="150" y="62" width="280" height="154" opacity=".13"/>
   </g>
-  <text x="30" y="60" class="s-cond" font-size="22" font-weight="600" fill="#1D3F7A">No. 1966-0002</text>
-  <text x="500" y="60" class="s-sans" font-size="21" font-weight="900" fill="#1D3F7A" text-anchor="end">車埕 ─ 花壇</text>
-  <text x="270" y="162" class="s-sans" font-size="86" font-weight="900" fill="none" stroke="#1D3F7A" stroke-width="3" text-anchor="middle" letter-spacing="6">阿公講古</text>
-  <g class="s-sans" font-size="15" font-weight="700" fill="#1D3F7A"><text x="54" y="208">日期 1966</text><text x="164" y="208">車次 鑽石婚號</text><text x="304" y="208">乘客 2 人</text><text x="404" y="208">有效 60 年</text></g>
-  <text x="650" y="62" class="s-sans" font-size="24" font-weight="900" fill="#F4EAD2" text-anchor="middle">車埕 → 2026</text>
-  <text x="650" y="92" class="s-sans" font-size="14" fill="#F4EAD2" text-anchor="middle">1966 上車　座位 1・2</text>
+  <text x="30" y="60" class="s-cond" font-size="22" font-weight="600" fill="#1D3F7A">特別加開車廂</text>
+  <text x="500" y="60" class="s-sans" font-size="21" font-weight="900" fill="#1D3F7A" text-anchor="end">車埕 ─ 水里 ─ 民族路橋</text>
+  <text x="270" y="162" class="s-sans" font-size="86" font-weight="900" fill="#1D3F7A" text-anchor="middle" letter-spacing="6">阿公講古</text>
+  <g class="s-sans" font-size="15" font-weight="700" fill="#1D3F7A"><text x="54" y="208">主講 阿公</text><text x="170" y="208">車次 講古號</text><text x="304" y="208">停靠 3 站</text><text x="404" y="208">有效 聽完為止</text></g>
+  <text x="650" y="62" class="s-sans" font-size="22" font-weight="900" fill="#F4EAD2" text-anchor="middle">車埕 → 民族路橋</text>
+  <text x="650" y="92" class="s-sans" font-size="14" fill="#F4EAD2" text-anchor="middle">阿公帶路　全家同行</text>
   <use href="#loco" x="600" y="104" width="100" height="55" style="--blue:#F4EAD2;--glass:#1D3F7A;--line2:#1D3F7A;--stripe:#1D3F7A;--under:#F4EAD2"/>
-  <text x="650" y="196" class="s-cond" font-size="17" fill="#F4EAD2" text-anchor="middle">No. 1966-0002</text>
+  <text x="650" y="196" class="s-cond" font-size="17" fill="#F4EAD2" text-anchor="middle">3 段故事</text>
 </svg>
 </div>
 
@@ -679,18 +690,32 @@ const bust=(id,i)=>{const sp=LOOK(id,2026);return `<svg viewBox="-6 36 132 112" 
 // ── 阿公講古 ──
 const KID=(c='#F7F4EC')=>({...LOOK('dad',1950),topColor:c}); // 小時候的爸爸與同伴
 const puppet=(sp,x,feet,ps,cls='')=>`<g class="${cls}"><g transform="translate(${x-60*ps} ${feet-210*ps}) scale(${ps})">${fig(sp)}</g></g>`;
-const sheep=(x,y,k,c)=>`<g class="graze ${c}"><g transform="translate(${x} ${y}) scale(${k})" stroke="#4A3428" stroke-width="2.4"><path d="M-18 12v14M16 12v14" /><path d="M-34 0c-6-14 10-22 18-16 6-10 24-8 28 0 12-4 22 8 16 18 4 12-10 20-20 14-8 8-24 6-28-2-12 2-20-6-14-14Z" fill="#FBF8F1"/><path d="M36-8c8-8 24-4 24 8 0 10-14 14-22 8Z" fill="#E6DCCD"/><circle cx="50" cy="-3" r="2.4" fill="#3A2A22" stroke="none"/></g></g>`;
+const sheep=(x,y,k,c,d=0)=>`<g class="roam" style="animation-delay:${d}s"><g class="graze ${c}"><g transform="translate(${x} ${y}) scale(${k})" stroke="#4A3428" stroke-width="2.4"><g class="sFlip" style="animation-delay:${d}s"><path d="M-18 12v14M16 12v14" /><path d="M-34 0c-6-14 10-22 18-16 6-10 24-8 28 0 12-4 22 8 16 18 4 12-10 20-20 14-8 8-24 6-28-2-12 2-20-6-14-14Z" fill="#FBF8F1"/><path d="M36-8c8-8 24-4 24 8 0 10-14 14-22 8Z" fill="#E6DCCD"/><circle cx="50" cy="-3" r="2.4" fill="#3A2A22" stroke="none"/></g></g></g></g>`;
+// 小阿公：手拿樹枝追羊。樹枝塞進 .arm 才會跟著手臂揮
+const herder=(x,feet,ps)=>`<g transform="translate(${x} ${feet})"><g class="kidRun"><g class="kidFlip"><g class="hop herder"><g transform="translate(${-60*ps} ${-210*ps}) scale(${ps})">${fig(KID()).replace(/<g class="arm"[^>]*>/,'$&<path d="M41 172Q35 205 20 244M31 212l-13-5M26 228l11 6" fill="none" stroke="#7A5230" stroke-width="4.5"/>')}</g></g></g></g></g>`;
 const SKY=g=>`<defs><linearGradient id="tSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A3D2EA"/><stop offset="1" stop-color="#F4ECDA"/></linearGradient></defs><rect width="1200" height="675" fill="url(#tSky)"/><circle cx="1090" cy="86" r="42" fill="#F6C667"/><path d="M0 330 L180 230 L340 310 L520 210 L720 320 L900 240 L1200 330 V675 H0Z" fill="#A7C4AE"/><path d="M0 380 L240 300 L470 370 L700 290 L960 380 L1200 320 V675 H0Z" fill="#86AB90"/><rect y="${g}" width="1200" height="${675-g}" fill="#9DBB7F"/>`;
 const bld=(x,y,w,h,wall,roof,label)=>`<g stroke="#4A3428" stroke-width="2.4"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${wall}"/><path d="M${x-14} ${y} L${x+w/2} ${y-54} L${x+w+14} ${y}Z" fill="${roof}"/><rect x="${x+w/2-16}" y="${y+h-58}" width="32" height="58" fill="#6E4A32"/></g><text x="${x+w/2}" y="${y+34}" text-anchor="middle" class="s-sans" font-size="22" font-weight="900" fill="#3A1F1A">${label}</text>`;
+// 水里地圖：依 Google 地圖截圖描出相對位置（座標＝截圖像素，k 換算到畫面；手繪重畫，不貼截圖）
+const mapK=600/580,mapX=x=>30+(x-190)*mapK,mapY=y=>130+(y-100)*mapK;
+const pin=(x,y,c,t,dx=20)=>`<path d="M${x} ${y}c-7-12-15-18-15-29a15 15 0 0 1 30 0c0 11-8 17-15 29Z" fill="${c}" stroke="#fff" stroke-width="3"/><circle cx="${x}" cy="${y-29}" r="5.5" fill="#fff"/><text x="${x+dx}" y="${y-18}" class="s-sans" font-size="26" font-weight="900" fill="#1E2A44" stroke="#fff" stroke-width="6" paint-order="stroke">${t}</text>`;
+const SHUILI=`<defs><clipPath id="tMap"><rect x="190" y="100" width="580" height="512"/></clipPath></defs><rect x="36" y="137" width="600" height="530" rx="10" fill="#1E2A44" opacity=".22"/><rect x="30" y="130" width="600" height="530" rx="10" fill="#F6F0E0"/>
+<g transform="translate(${mapX(0)} ${mapY(0)}) scale(${mapK})"><g clip-path="url(#tMap)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M700 100C690 180 720 260 770 330V100Z" fill="#D5E8CC"/>
+<path d="M190 426C250 422 305 397 340 377S460 345 500 325 545 262 556 243M540 270C560 282 585 275 605 255S640 225 650 225 700 268 730 287 760 290 770 289" stroke="#7EC4E2" stroke-width="7"/><path d="M566 238C580 225 590 200 622 174" stroke="#7EC4E2" stroke-width="17"/>
+<path d="M190 165C230 190 300 208 345 205S410 165 445 140 465 128 480 118" stroke="#8F8A80" stroke-width="4" stroke-dasharray="11 7"/>
+<g stroke="#D8D1C0" stroke-width="5"><path d="M470 180L500 250 535 335 560 380 565 450 570 515 590 612M490 350L570 300 625 235M325 420L470 367 510 345M400 465L420 450 470 425 490 405 530 380M410 470L490 460 560 460M355 515L430 535 510 515 565 515M468 460L490 550M300 245C340 230 400 240 440 215S520 170 560 150M430 205L500 250M295 280L323 350M410 535L400 612M500 515L520 612M565 515L680 612M380 400L400 465"/></g>
+<path d="M190 290L320 352 400 338 460 315 505 295 530 270 545 225 560 150 572 100M320 352L322 420 327 500 335 560 350 612M190 568L260 530 327 505" stroke="#A9B4C6" stroke-width="13"/>
+</g>
+<text transform="translate(238 448) rotate(-6)" class="s-sans" font-size="26" font-weight="900" fill="#2F8DBB" stroke="#fff" stroke-width="5" paint-order="stroke" letter-spacing="3">水里溪</text>
+</g>${pin(mapX(453),mapY(148),'#1E2A44','水里車站')+pin(mapX(473),mapY(414),'#3E5F96','德川旅館')+pin(mapX(489),mapY(465),'#8E2A3A','水里電信局')+pin(mapX(540),mapY(568),'#B8693F','水里小學')}
+<g transform="translate(596 176)" class="s-sans" font-size="20" font-weight="900" fill="#4F5A70" text-anchor="middle"><path d="M0-26L9 0H-9Z" fill="#4F5A70"/><text y="22">北</text></g>`;
+const swimmer=(x,water,c)=>`<g class="bob wave"><g transform="translate(${x-60*.46} ${water-80.5}) scale(.46)"><g clip-path="url(#tWat)">${fig(KID(c))}</g></g><path d="M${x-38} ${water}h76" stroke="#CDE9F2" stroke-width="5"/></g>`;
 const TOUR=[
  {say:'這裡是阿祖當站長的宿舍，是阿公成長、養一群羊的地方。現在重建成咖啡餐廳，房屋結構和以前完全相同。',
   scene:()=>SKY(430)+`<g style="--mtn2:#86AB90" transform="translate(40 240) scale(.98)">${CHECHENG}</g><g transform="translate(432 388) scale(.85)">${DORM}</g>`
-   +sheep(120,628,.95,'b')+sheep(470,612,.9,'')+sheep(640,632,1,'b')+sheep(345,632,1.05,'c')+sheep(810,618,.9,'')+puppet(KID(),250,610,.82)},
+   +sheep(190,622,.95,'b',-.1)+sheep(300,606,.9,'',-.25)+sheep(400,630,1.05,'c',0)+sheep(500,610,.9,'',-.15)+sheep(600,628,1,'b',-.3)+herder(70,642,.82)},
  {say:'我們住的德川旅館，媽媽上班的水里電信局就在 500 公尺遠；爸爸念了 6 年的小學，也只在 800 公尺遠。',
-  scene:()=>SKY(470)+`<rect x="30" y="520" width="700" height="46" fill="#8C8578"/><path d="M30 543H730" stroke="#F4EAD2" stroke-width="3" stroke-dasharray="20 18"/>`
-   +bld(30,350,160,120,'#E8DFCC','#8E2A3A','電信局')+bld(220,350,160,120,'#F4EAD2','#3E5F96','德川旅館')+bld(515,350,150,120,'#F1E2BF','#B8693F','小學')
-   +`<g class="s-sans" font-size="24" font-weight="900" fill="#fff" text-anchor="middle" stroke="#1E2A44" stroke-width="5" paint-order="stroke"><text x="205" y="604">← 500 公尺</text><text x="450" y="604">800 公尺 →</text></g><text x="60" y="655" class="s-sans" font-size="17" fill="#1E2A44">距離示意圖</text>`
-   +puppet(PEOPLE.mom66,70,520,.78,'bob')+puppet(KID(),700,520,.78,'bob')},
+  scene:()=>SKY(470)+SHUILI+puppet(PEOPLE.mom66,mapX(447),mapY(487),.42,'bob')+puppet(KID(),mapX(498),mapY(592),.42,'bob')},
  {say:'小時候的夏天，每天都在橋下游泳玩水。大家還比賽，從橋面跳下水，又從拱型橋墩頂跳下！',
   scene:()=>SKY(560)+`<path d="M0 300 C120 190 260 215 380 230 C520 170 700 220 860 250 C1000 230 1100 260 1200 290 V520 H0Z" fill="#3F7A44"/><path d="M0 360 C150 300 280 340 420 330 C600 300 820 340 1200 330 V520 H0Z" fill="#2F6238"/><g fill="#57934F"><circle cx="90" cy="290" r="46"/><circle cx="660" cy="300" r="52"/><circle cx="700" cy="400" r="58"/><circle cx="20" cy="400" r="50"/></g>
    <rect y="480" width="1200" height="195" fill="#5FA9C8"/><path d="M40 560q30-12 60 0t60 0M620 590q30-12 60 0t60 0M240 640q30-12 60 0t60 0M780 540q30-12 60 0t60 0" fill="none" stroke="#CDE9F2" stroke-width="4"/>
@@ -705,7 +730,8 @@ const TOUR=[
    <g stroke="#4A3428" stroke-width="2"><ellipse cx="60" cy="510" rx="26" ry="12" fill="#8E8A80"/><ellipse cx="620" cy="510" rx="26" ry="12" fill="#8E8A80"/><ellipse cx="410" cy="508" rx="28" ry="14" fill="#A7A296"/><ellipse cx="480" cy="518" rx="20" ry="11" fill="#8E8A80"/><ellipse cx="540" cy="506" rx="22" ry="12" fill="#B8B3A8"/><ellipse cx="240" cy="532" rx="16" ry="9" fill="#A7A296"/></g>`
    +puppet(KID('#FFD58A'),130,250,.55,'jumper')+puppet(KID('#CFE3EE'),340,350,.55,'jumper b')
    +`<ellipse class="splash" cx="176" cy="524" rx="52" ry="16" fill="#fff"/><ellipse class="splash b" cx="300" cy="524" rx="52" ry="16" fill="#fff"/>`
-   +`<g class="bob"><g transform="translate(560 531) scale(.46)"><clipPath id="tWat"><rect x="-30" y="0" width="180" height="150"/></clipPath><g clip-path="url(#tWat)">${fig(KID('#F7F4EC'))}</g></g><path d="M550 600h76" stroke="#CDE9F2" stroke-width="5"/></g>`}
+   +`<clipPath id="tWat"><rect x="-30" y="0" width="180" height="175"/></clipPath>`+swimmer(560,600,'#F7F4EC')
+   +`<g class="swim" style="--sx:-300px;--sy:0px">${swimmer(176,540,'#FFD58A')}</g><g class="swim b" style="--sx:-430px;--sy:70px">${swimmer(300,540,'#CFE3EE')}</g>`}
 ];
 function tour(s){
   if(s.ov!=='ovTour')return;

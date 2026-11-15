@@ -363,8 +363,9 @@ function renderTodo(){
   const box=$('todo');box.replaceChildren();
   for(const g of window.TODO||[]){const sec=document.createElement('section');
     const h=document.createElement('h3');h.textContent=g.t;const ul=document.createElement('ul');
-    for(const [key,it] of g.a){const li=document.createElement('li'),label=document.createElement('label'),cb=document.createElement('input'),txt=document.createElement('span');
+    for(const [key,it,url] of g.a){const li=document.createElement('li'),label=document.createElement('label'),cb=document.createElement('input'),txt=document.createElement('span');
       it.split('**').forEach((x,i)=>{if(!x)return;if(i%2){const b=document.createElement('b');b.textContent=x;txt.append(b)}else txt.append(x)});
+      if(url){const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.textContent='打開 →';txt.append(' ',a)}
       cb.type='checkbox';cb.dataset.key=key;cb.disabled=true;
       cb.addEventListener('change',async()=>{const on=cb.checked;cb.disabled=true;
         const j=await todoPost({action:'toggle',key,on});cb.disabled=false;if(!j)cb.checked=!on});
