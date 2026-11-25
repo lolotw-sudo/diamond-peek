@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>鑽石婚號｜六十年</title>
+<style>
+html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;color:#fff}
+#out{position:absolute;inset:0;margin:auto;width:min(100vw,177.78vh);height:min(100vh,56.25vw);display:block}
+#gate{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:18px;background:radial-gradient(#101a3a,#02030a);text-align:center}
+#gate h1{font:700 clamp(36px,7vw,84px) "Songti TC","Noto Serif TC",serif;margin:0;letter-spacing:.2em}
+#gate p{margin:0;opacity:.75}
+button{font:inherit;color:#fff;background:#ffffff22;border:1px solid #ffffff66;border-radius:999px;padding:.5em 1.2em;cursor:pointer}
+button:hover,button:focus-visible{background:#ffffff44;outline:2px solid #fff}
+button:disabled{opacity:.4;cursor:wait}
+#go{font-size:22px;padding:.7em 2em}
+#bar{position:absolute;left:0;right:0;bottom:0;display:flex;gap:10px;align-items:center;padding:10px 14px;background:linear-gradient(transparent,#000c);transition:opacity .4s}
+#bar.idle{opacity:0}
+#seek{flex:1}
+#time{font-variant-numeric:tabular-nums;min-width:6.5em;text-align:center}
+[hidden]{display:none!important}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<canvas id="out" width="1920" height="1080" aria-label="鑽石婚號 3D 影片畫面"></canvas>
+<div id="gate">
+  <h1>鑽石婚號</h1>
+  <p>獻給 李添永 × 馬玉霞　結婚六十週年</p>
+  <button id="go" disabled>配樂合成中…</button>
+  <p style="font-size:13px">空白鍵 播放／暫停　F 全螢幕　← → 快轉</p>
+</div>
+<div id="bar" hidden>
+  <button id="pp" aria-label="播放或暫停">⏸</button>
+  <input id="seek" type="range" min="0" max="168" step="0.1" value="0" aria-label="影片進度">
+  <span id="time">0:00 / 2:48</span>
+  <button id="rec" title="從頭播放並錄成影片檔">⏺ 錄成影片檔</button>
+  <button id="fs" aria-label="全螢幕">⛶</button>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
+import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
+import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
+import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
+import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+
+/* ───────── 基本工具 ───────── */
+const W=1920,H=1080,DUR=168,PI=Math.PI;
+const cl=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const lerp=(a,b,u)=>a+(b-a)*u;
+const ss=(a,b,x)=>{x=cl((x-a)/(b-a));return x*x*(3-2*x);};
+const s5=u=>u*u*u*(u*(u*6-15)+10);
+const fract=x=>x-Math.floor(x);
+const back=u=>{u=cl(u);const c=1.7;return 1+(c+1)*Math.pow(u-1,3)+c*Math.pow(u-1,2);};
+const mixP=(a,b,u)=>a.map((v,i)=>v+(b[i]-v)*u);
+const rng=s=>()=>(s=(s*1664525+1013904223)>>>0)/4294967296;
+const SERIF='"Songti TC","Noto Serif TC","PMingLiU",serif', SANS='"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif';
+
+/* ───────── 腳本資料：15 位乘客與停靠站 ───────── */
+const PU='#8A62A8',CY='#1F7FA3',GR='#6E9228',DAD='#2B4A7E',MOM='#8E2A3A';
+const M=[ // 依上車順序＝座位順序
+ {n:'爸爸',c:DAD},{n:'媽媽',c:MOM,f:1},
+ {n:'怡婷',c:PU,f:1,baby:1},{n:'偉立',c:CY,baby:1},{n:'怡菁',c:GR,f:1,baby:1},
+ {n:'翰毅',c:PU,groom:1},{n:'培元',c:PU,baby:1},{n:'培典',c:PU,baby:1},
+ {n:'名璋',c:GR,groom:1},{n:'敬凱',c:GR,baby:1},{n:'敬達',c:GR,baby:1},
+ {n:'淑娟',c:CY,f:1,bride:1},{n:'兆宸',c:CY,baby:1},{n:'兆鈞',c:CY,baby:1},{n:'玉麟',c:PU,f:1,bride:1}];
+const STOPS=[ // T＝這一段開始的秒數；m＝這一段亮燈的人；y＝各自的年份；c＝字幕停留秒數
+ {T:60,  y:[1968],m:[2],h:'老大 怡婷 上車',s:'爸爸媽媽迎來第一個孩子。',c:3.7},
+ {T:64.5,y:[1970],m:[3],h:'老二 偉立 上車',s:'怡婷 2 歲，這一年當上了姐姐。',c:3.7},
+ {T:69,  y:[1975],m:[4],h:'老三 怡菁 上車',s:'一家五口，到齊。',c:3},
+ {T:78,  y:[1993,1995,1998],m:[5,6,7],h:'翰毅 加入，培元、培典 出生',s:'我們家迎來新成員，爸媽升格為阿公阿嬤。',c:8,w:1},
+ {T:87,  y:[2001,2002,2004],m:[8,9,10],h:'名璋 加入，敬凱、敬達 出生',s:'車上 11 個人了。',c:8,w:1},
+ {T:96,  y:[2008,2008,2010],m:[11,12,13],h:'淑娟 加入，兆宸、兆鈞 出生',s:'終於等來姓李的孫子了～',c:8,w:1},
+ {T:114, y:[2025],m:[14],h:'孫媳婦 玉麟 加入',s:'第 15 位乘客，上車。',c:5.2,w:1}];
+const SX=i=>-1.9-1.5*i;                       // 第 i 扇車窗的位置（相對車頭）
+const TUNT=[78,114];                           // 這兩段是「衝出隧道」
+const LITD=s=>TUNT.includes(s.T)?3.75:2.25;    // 這一段開始後多久亮第一盞燈
+const LIT=M.map(()=>[]);                       // 每扇窗亮燈的時間區間
+LIT[1]=[[21,1e9]]; LIT[0]=[[41.25,1e9]];       // 媽媽＝車廂亮起第一盞燈；爸爸＝火車頭掛上車廂
+STOPS.forEach(s=>s.m.forEach((m,j)=>LIT[m]=[[s.T+LITD(s)+j*.75,1e9]]));
+const ROLL=i=>120.75+.75*i;                    // 片尾點名時間
+const eo=u=>1-(1-u)*(1-u), ei=u=>u*u, li=u=>u;
+// 火車頭的世界座標 X(t)：1966 以前一段一段，掛上車廂之後就不再停
+const SEG=[[0,12,-300,60,li],[12,12,1988,1988,li],[28.5,28.5,3990,3990,li],[31.5,36,3990,4090,ei],[36,41,6130,6000,eo]];
+function X(t){
+  if(t>=54){const u=t-54;return 6000+32*(u-1.5*(1-Math.exp(-u/1.5)));}
+  let x=-300; for(const [a,b,x0,x1,e] of SEG){if(t<a)break; x=t<b?x0+(x1-x0)*e((t-a)/(b-a)):x1;} return x;
+}
+const X156=X(156), AX=t=>{if(t<156)return X(t);const u=Math.min(t-156,8);return X156+30*(u-u*u/16);};
+const PD=26;                                   // 隧道口離山中心的距離
+const TUN=[4101,...TUNT.map(T=>X(T)+9-PD)];    // 隧道（山）的中心位置
+const VAL=[X(95.5)-8];                         // 河谷（石拱橋）的中心位置
+const VW=240,VF=30,VD=55;                      // 河谷：半寬、河面半寬、深度
+const floorY=dx=>Math.min(0,-VD*(1-Math.max(0,(Math.abs(dx)-VF)/(VW-VF))));  // 離河谷中心 dx 處的地面高度
+const near=(arr,x)=>arr.reduce((a,b)=>Math.abs(b-x)<Math.abs(a-x)?b:a);
+const SLK=[[32.5,0],[35,5],[36,5],[36.001,0],[70,0],[74,8],[77.5,8],[77.501,0],
+ [106,0],[110,6],[113.5,6],[113.501,0],[999,0]];
+function slope(t){ // 上坡角度（弧度）：整個畫面跟著傾斜，看起來就是火車在爬山
+  if(t<SLK[0][0])return 0;let i=0;while(SLK[i+1][0]<=t)i++;return lerp(SLK[i][1],SLK[i+1][1],ss(SLK[i][0],SLK[i+1][0],t))*PI/180;
+}
+function stationAt(t){
+  if(t<12||t>=57.9)return null;
+  if(t<20.25)return{x:1992,p:1992,n:'車埕',e:'CHECHENG'};
+  if(t<28.5)return{x:2992,p:2992,n:'花壇',e:'HUATAN'};
+  if(t<36)return{x:3998.1,p:3992,n:'車埕',e:'CHECHENG'};
+  return{x:5997.35,p:5992,n:'車埕',e:'CHECHENG'};
+}
+const YE=STOPS.flatMap(s=>s.m.map((m,j)=>[s.T+LITD(s)+j*.75,s.y[j],M[m].baby?'新乘客':'新家人']));
+function yearAt(t){
+  if(t<12.3||t>165)return null;
+  if(t<20.25)return[1939,'車埕'];if(t<28.5)return[1945,'花壇'];if(t<36)return[1958,'車埕 → 臺北'];
+  if(t<54)return[1966,'車埕'];
+  let py=1966,pd=54;
+  for(let i=0;i<YE.length;i++){const[a,y,lb]=YE[i],d=Math.min(a+3,YE[i+1]?YE[i+1][0]:1e9);
+    if(t<a)return[Math.round(lerp(py,y,cl((t-pd)/(a-pd)))),''];
+    if(t<d)return[y,lb]; py=y;pd=d;}
+  return[t<121.5?2025:2026,t<132?'':'鑽石婚'];
+}
+const CAPS=[ // [開始, 結束, 大標, 小字, 置中大字?]
+ [2.4,9.6,'鑽石婚號','獻給　李添永 × 馬玉霞　結婚六十週年',1],
+ [13.5,19.7,'男主角 李添永 出生了','車埕站站長的兒子，排行老四。'],
+ [21.2,27.9,'女主角 馬玉霞 出生了','花壇站站長的長女。'],
+ [29.2,35.2,'19 歲，獨自北上','到臺北電信局工程總隊上班，一個人在臺北打拼。'],
+ [36.8,41.4,'1966 年 12 月 27 日','火車頭回到車埕，掛上了那節車廂。'],
+ [42.6,50.2,'兩個人，結婚了','婚禮就在車埕站的站長宿舍。'],
+ [51.2,59.2,'搭上同一班車','北上，建立一個新的家。'],
+ ...STOPS.map(s=>[s.T+.5,s.T+.5+s.c,s.h,s.s]),
+ [72.6,76.8,'孩子們一年一年長大','這班車，載著一家五口往山上開。'],
+ [105.5,112.4,'車上坐滿 14 個人','從兩個人的車廂，變成三代同堂的列車。'],
+ [121,131.6,'十五個人，同一班車',''],
+ [133,143,'六十年','兩萬一千九百多個日子。'],
+ [144.6,155.6,'爸爸、媽媽　鑽石婚快樂','謝謝你們，讓這班車有了我們。',2],
+ [157,164.6,'下一站・2036　鉑金婚','列車繼續開。',2]];
+
+/* ───────── three.js 場景 ───────── */
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(W,H,false); renderer.setPixelRatio(1);
+renderer.shadowMap.enabled=true; renderer.localClippingEnabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.15;
+const scene=new THREE.Scene(); scene.fog=new THREE.Fog('#fff',90,430);
+const cam=new THREE.PerspectiveCamera(38,W/H,.3,2500);
+const composer=new EffectComposer(renderer,new THREE.WebGLRenderTarget(W,H,{type:THREE.HalfFloatType,samples:4}));
+composer.addPass(new RenderPass(scene,cam));
+const bloom=new UnrealBloomPass(new THREE.Vector2(W,H),.5,.7,1.0); composer.addPass(bloom); composer.addPass(new OutputPass());
+
+const mat=(c,o={})=>new THREE.MeshStandardMaterial({color:c,roughness:.85,...o});
+// 河谷：用兩個裁切平面把 x 介於兩者之間的地面、樹、田挖空
+const clipA=new THREE.Plane(new THREE.Vector3(-1,0,0),0), clipB=new THREE.Plane(new THREE.Vector3(1,0,0),0), CLIP={clippingPlanes:[clipA,clipB],clipIntersection:true};
+function box(w,h,d,c,x=0,y=0,z=0,r=0){
+  const m=new THREE.Mesh(r?new RoundedBoxGeometry(w,h,d,3,r):new THREE.BoxGeometry(w,h,d),c.isMaterial?c:mat(c));
+  m.position.set(x,y,z); m.castShadow=m.receiveShadow=true; return m;
+}
+function cyl(r1,r2,h,c,x=0,y=0,z=0,seg=20){const m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,seg),c.isMaterial?c:mat(c));m.position.set(x,y,z);m.castShadow=true;return m;}
+function ball(r,c,x=0,y=0,z=0){const m=new THREE.Mesh(new THREE.SphereGeometry(r,16,12),c.isMaterial?c:mat(c));m.position.set(x,y,z);return m;}
+function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'));const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;}
+function rr(g,x,y,w,h,r){g.beginPath();g.roundRect(x,y,w,h,r);}
+const dotTex=canvasTex(64,64,g=>{const d=g.createRadialGradient(32,32,0,32,32,32);d.addColorStop(0,'#fff');d.addColorStop(.3,'#ffffffcc');d.addColorStop(1,'#fff0');g.fillStyle=d;g.fillRect(0,0,64,64);});
+
+// 天空、光
+const sky=new THREE.Mesh(new THREE.SphereGeometry(1800,24,12),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,
+  uniforms:{top:{value:new THREE.Color()},hor:{value:new THREE.Color()}},
+  vertexShader:'varying float h;void main(){h=normalize(position).y;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+  fragmentShader:'uniform vec3 top,hor;varying float h;void main(){gl_FragColor=vec4(mix(hor,top,pow(clamp(h,0.,1.),.5)),1.);}'}));
+const hemi=new THREE.HemisphereLight('#fff','#5d6b4a',1); scene.add(hemi);
+const sun=new THREE.DirectionalLight('#fff',2); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-48,right:48,top:48,bottom:-48,near:1,far:260}); sun.shadow.bias=-.0006; scene.add(sun,sun.target);
+const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(40,24,16),new THREE.MeshBasicMaterial({fog:false}));
+const starGeo=new THREE.BufferGeometry();{const r=rng(7),p=[];for(let i=0;i<1600;i++){const a=r()*PI*2,e=Math.asin(r()*.98+.02);p.push(1500*Math.cos(e)*Math.cos(a),1500*Math.sin(e),1500*Math.cos(e)*Math.sin(a));}starGeo.setAttribute('position',new THREE.Float32BufferAttribute(p,3));}
+const stars=new THREE.Points(starGeo,new THREE.PointsMaterial({color:'#fff',size:2.6,sizeAttenuation:false,transparent:true,fog:false,depthWrite:false}));
+const heaven=new THREE.Group(); heaven.add(sky,stars,sunDisc); scene.add(heaven);
+const TODP={dawn:{top:'#5578c0',hor:'#ffcfa8',sun:'#ffc091',si:2.0,hi:.8,st:0,el:7},day:{top:'#3d8fe6',hor:'#d4ecff',sun:'#fff3dd',si:2.7,hi:1.05,st:0,el:50},
+  dusk:{top:'#3a3a80',hor:'#ff9c66',sun:'#ff9458',si:1.9,hi:.7,st:.15,el:5},night:{top:'#050818',hor:'#18244f',sun:'#93a9ff',si:.6,hi:.34,st:1,el:-25}};
+for(const p of Object.values(TODP))for(const k of['top','hor','sun'])p[k]=new THREE.Color(p[k]);
+const TODK=[[0,'night'],[11.4,'night'],[12,'dawn'],[19,'dawn'],[20.25,'day'],[52,'day'],[58,'dusk'],[60.2,'dusk'],[62,'day'],[70,'day'],[74.5,'dusk'],[77.45,'dusk'],[77.55,'day'],
+  [104,'day'],[106,'dusk'],[108,'night'],[110,'night'],[112.4,'dawn'],[113.45,'dawn'],[113.55,'day'],
+  [119,'day'],[122.5,'dusk'],[126,'night'],[155,'night'],[162,'dawn'],[999,'dawn']];
+const tod={top:new THREE.Color(),hor:new THREE.Color(),sun:new THREE.Color(),si:1,hi:1,st:0,el:0};
+function setTod(t){
+  let i=0; while(TODK[i+1][0]<=t)i++;
+  const a=TODP[TODK[i][1]],b=TODP[TODK[i+1][1]],u=cl((t-TODK[i][0])/(TODK[i+1][0]-TODK[i][0]));
+  for(const k of['top','hor','sun'])tod[k].lerpColors(a[k],b[k],u);
+  for(const k of['si','hi','st','el'])tod[k]=lerp(a[k],b[k],u);
+}
+
+// 地面、軌道
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(4000,4000),mat('#86b35f',{roughness:1,...CLIP})); ground.rotation.x=-PI/2; ground.receiveShadow=true; scene.add(ground);
+const track=new THREE.Group(); scene.add(track);
+track.add(box(1400,.16,3.4,'#8d8577',0,.08,0));
+for(const z of[-.75,.75])track.add(box(1400,.14,.12,mat('#5b5f66',{metalness:.7,roughness:.35}),0,.25,z));
+{const n=900,im=new THREE.InstancedMesh(new THREE.BoxGeometry(.3,.1,2.3),mat('#5a4332'),n),o=new THREE.Object3D();for(let i=0;i<n;i++){o.position.set((i-n/2)*1.2,.15,0);o.updateMatrix();im.setMatrixAt(i,o.matrix);}im.receiveShadow=true;track.add(im);}
+{const n=30,o=new THREE.Object3D(),p=new THREE.InstancedMesh(new THREE.CylinderGeometry(.12,.16,8,6),mat('#4d3b2c',CLIP),n),a=new THREE.InstancedMesh(new THREE.BoxGeometry(.14,.14,2),mat('#4d3b2c',CLIP),n);
+ for(let i=0;i<n;i++){o.position.set((i-n/2)*36+18,4,-9);o.updateMatrix();p.setMatrixAt(i,o.matrix);o.position.y=7.4;o.updateMatrix();a.setMatrixAt(i,o.matrix);}p.castShadow=true;track.add(p,a);
+ for(const z of[-9.8,-8.2])track.add(box(1100,.03,.03,'#222',0,7.5,z));}
+
+// 植物模型庫：四種樹（單層松、三層杉、闊葉樹、白楊）、灌木叢、草叢、石頭、蘑菇；原點都在地面
+const ico=(r,x,y,z,sx=1,sy=1,sz=1)=>new THREE.IcosahedronGeometry(r,1).scale(sx,sy,sz).translate(x,y,z), cone=(r,h,y,x=0,z=0,seg=7)=>new THREE.ConeGeometry(r,h,seg).toNonIndexed().translate(x,y,z);
+const TREES=[cone(2.3,6.5,5.25), mergeGeometries([cone(2.7,3.6,3.7),cone(2.15,3.1,5.7),cone(1.5,2.7,7.5)]),
+  mergeGeometries([ico(2.4,0,5.7,0),ico(1.8,1.7,4.9,.6),ico(1.7,-1.5,5.1,-.8),ico(1.5,.2,7.3,.3)]), ico(1.5,0,5.6,0,1,2.5,1)];
+const TRUNKH=[1,1,1.9,1.5];
+const BUSH=mergeGeometries([ico(1,0,.7,0),ico(.7,.9,.5,.2),ico(.62,-.75,.5,-.4)]);
+const GRASS=mergeGeometries([[0,0,0],[.5,.25,.1],[-.45,-.3,-.1],[.2,-.15,.5],[-.2,.2,-.5]].map(([rz,x,z])=>new THREE.ConeGeometry(.11,.95,4).toNonIndexed().translate(0,.47,0).rotateZ(rz).translate(x,0,z)));
+const SHROOM=mergeGeometries([new THREE.CylinderGeometry(.09,.12,.4,6).toNonIndexed().translate(0,.2,0),new THREE.SphereGeometry(.3,8,5,0,PI*2,0,PI/2).toNonIndexed().translate(0,.36,0)]);
+// 會循環的風景（三塊拼接）
+const TW=420, leafMat=mat('#3f8f4a',{flatShading:true,...CLIP}), tiles=[];
+{const r=rng(42),o=new THREE.Object3D(),col=new THREE.Color();
+ const T=[],F=[],FL=[],HL=[],CLD=[];
+ for(let i=0;i<110;i++)T.push([(r()-.5)*TW,-17-r()*r()*110,.7+r()*.9]);
+ for(let i=0;i<34;i++){const near=i%2;F.push([(r()-.5)*TW,near?10+r()*70:-18-r()*80,18+r()*34,7+r()*12,['#9ccf63','#b9d86a','#7fbf5c','#d9d77a','#8fc777'][i%5]]);}
+ for(let i=0;i<150;i++)FL.push([(r()-.5)*TW,6.8+r()*26,['#ff9ec4','#ffe07a','#ffffff','#ff7e7e'][i%4]]);
+ for(let i=0;i<9;i++)HL.push([(i+.5)/9*TW-TW/2+(r()-.5)*20,-150-r()*130,50+r()*45,32+r()*46,['#5f9a6b','#4f8a70','#6aa57a'][i%3]]);
+ for(let i=0;i<5;i++)CLD.push([(r()-.5)*TW,60+r()*40,-120-r()*200,5+r()*5]);
+ const B=[],G=[],RK=[],MS=[], side=()=>r()<.72?-16-r()*r()*105:8+r()*34;   // 鐵軌和月台附近不種東西
+ for(let i=0;i<70;i++){const z=side();B.push([(r()-.5)*TW,z,z>0?.45+r()*.35:.6+r()*.9]);}   // 鏡頭這一側的灌木做矮一點，不會擋到鏡頭
+ for(let i=0;i<260;i++){const z=side();G.push([(r()-.5)*TW,z,z>0?.6+r()*.5:.7+r()*.9]);}
+ for(let i=0;i<34;i++)RK.push([(r()-.5)*TW,side(),.35+r()*1]);
+ for(let i=0;i<40;i++)MS.push([(r()-.5)*TW,-16-r()*40,.8+r()*.8]);
+ const gTr=new THREE.CylinderGeometry(.3,.4,2,6),gPl=new THREE.PlaneGeometry(1,1).rotateX(-PI/2),gFl=new THREE.IcosahedronGeometry(.24,0),gCl=new THREE.IcosahedronGeometry(1,1);
+ const trunkM=mat('#6b4a30',CLIP),fieldM=mat('#fff',{roughness:1,...CLIP}),flM=mat('#fff',CLIP),grassM=mat('#5aa548',{flatShading:true,...CLIP}),rockM=mat('#9a9c98',{flatShading:true,roughness:1,...CLIP}),capM=mat('#d9453c',CLIP),clM=mat('#fff',{flatShading:true,roughness:1});
+ for(let j=0;j<3;j++){
+  const g=new THREE.Group(), c2=new THREE.InstancedMesh(gTr,trunkM,T.length), kinds=TREES.map((geo,k)=>new THREE.InstancedMesh(geo,leafMat,Math.ceil(T.length/4)));
+  T.forEach(([x,z,s],i)=>{const k=(i*7+3)%4,m=kinds[k],n=m.userData.n=(m.userData.n||0)+1;   // 四種樹輪流種，每棵深淺略有不同
+    o.rotation.set(0,i,0);o.scale.setScalar(s);o.position.set(x,0,z);o.updateMatrix();m.setMatrixAt(n-1,o.matrix);m.setColorAt(n-1,col.setScalar(.82+((i*13)%10)*.035));
+    o.scale.set(s,s*TRUNKH[k],s);o.position.y=s*TRUNKH[k];o.updateMatrix();c2.setMatrixAt(i,o.matrix);});
+  kinds.forEach(m=>{m.count=m.userData.n;m.castShadow=true;});
+  const inst=(geo,m,list,y=0,tint)=>{const im=new THREE.InstancedMesh(geo,m,list.length);list.forEach(([x,z,s],i)=>{o.rotation.set(0,i*2.4,0);o.scale.setScalar(s);o.position.set(x,y,z);o.updateMatrix();im.setMatrixAt(i,o.matrix);if(tint)im.setColorAt(i,col.setScalar(.8+((i*7)%10)*.04));});return im;};
+  const bush=inst(BUSH,leafMat,B,0,1),grass=inst(GRASS,grassM,G,0,1),rock=inst(new THREE.IcosahedronGeometry(1,0).scale(1,.6,1),rockM,RK,.2,1),shroom=inst(SHROOM,capM,MS);bush.castShadow=true;
+  const f=new THREE.InstancedMesh(gPl,fieldM,F.length);o.rotation.set(0,0,0);
+  F.forEach(([x,z,w,d,c],i)=>{o.scale.set(w,1,d);o.position.set(x,.02+i*.001,z);o.updateMatrix();f.setMatrixAt(i,o.matrix);f.setColorAt(i,col.set(c));});f.receiveShadow=true;
+  const fl=new THREE.InstancedMesh(gFl,flM,FL.length);
+  FL.forEach(([x,z,c],i)=>{o.scale.setScalar(1);o.position.set(x,.25,z);o.updateMatrix();fl.setMatrixAt(i,o.matrix);fl.setColorAt(i,col.set(c));});
+  const hills=new THREE.Group();
+  HL.forEach(([x,z,rad,h,c],i)=>{const m=new THREE.Mesh(new THREE.ConeGeometry(rad,h,6+i%3),mat(c,{flatShading:true,roughness:1}));m.position.set(x,h/2-1,z);m.rotation.y=i;hills.add(m);});
+  const cn=CLD.length*4,cd=new THREE.InstancedMesh(gCl,clM,cn);
+  CLD.forEach(([x,y,z,s],i)=>{for(let q=0;q<4;q++){o.scale.set(s*(1.4-q*.2),s*.6,s);o.position.set(x+(q-1.5)*s*1.2,y+(q%2)*s*.3,z);o.updateMatrix();cd.setMatrixAt(i*4+q,o.matrix);}});
+  g.add(...kinds,c2,bush,grass,rock,shroom,f,fl,hills,cd); g.userData.hills=hills; scene.add(g); tiles.push(g);
+ }}
+
+// 車站（一座，依場景搬位置、換站名）
+const plats=new THREE.Group(), decor=new THREE.Group(); scene.add(plats,decor);
+for(const[z,w]of[[-4.7,5.2],[4.1,4]]){plats.add(box(66,.6,w,'#bdb5a8',0,.3,z));plats.add(box(66,.02,.22,'#f2c230',0,.61,z<0?-2.35:2.35));}
+const lampM=mat('#fff',{emissive:'#ffd9a0',emissiveIntensity:0});
+for(const x of[-27,-13,13,27]){plats.add(cyl(.09,.11,4.6,'#39424e',x,2.9,-6.6,8));plats.add(ball(.3,lampM,x,5.3,-6.6));}
+const signM=new THREE.MeshBasicMaterial({color:'#fff'}), signCache={};
+function signTex(n,e){return signCache[n]??=canvasTex(768,270,g=>{
+  g.fillStyle='#fff';rr(g,6,6,756,258,26);g.fill();g.lineWidth=12;g.strokeStyle='#22365f';g.stroke();
+  g.fillStyle='#1c2a4a';g.textAlign='center';g.textBaseline='middle';g.font=`900 150px ${SANS}`;g.fillText(n,384,112);
+  g.fillStyle='#22365f';g.fillRect(60,196,648,8);g.font=`600 34px ${SANS}`;g.fillText(e,384,232);});}
+{const b=new THREE.Mesh(new THREE.PlaneGeometry(5.6,1.97),signM);b.position.set(0,6.5,-2.55);decor.add(b,box(5.8,2.15,.14,'#22365f',0,6.5,-2.64));
+ for(const x of[-2.5,2.5])decor.add(cyl(.1,.1,6.4,'#22365f',x,3.2,-2.7,8));
+ // 站房
+ const bx=11,bz=-11; decor.add(box(15,4.4,5.4,'#efe3c8',bx,2.8,bz));
+ const tri=new THREE.Shape();tri.moveTo(-3.6,0);tri.lineTo(3.6,0);tri.lineTo(0,2.4);tri.closePath();
+ const roof=new THREE.Mesh(new THREE.ExtrudeGeometry(tri,{depth:16.4,bevelEnabled:false}),mat('#8a4b3a'));roof.rotation.y=PI/2;roof.position.set(bx-8.2,5,bz);roof.castShadow=true;decor.add(roof);
+ decor.add(box(1.6,2.6,.12,'#6b3f2a',bx,1.9,bz+2.72));
+ const wm=mat('#9fc3e0',{emissive:'#ffd58a',emissiveIntensity:0});decor.userData.wm=wm;
+ for(const x of[-5,-2.6,2.6,5])decor.add(box(1.5,1.4,.1,wm,bx+x,3.1,bz+2.72));
+ decor.add(box(16,.25,3.2,'#4f7a5a',bx,4.7,bz+4),box(2.6,.5,.7,'#8a5a3a',-7,.95,-6.3));
+ for(const x of[-7,7])decor.add(cyl(.12,.12,4.1,'#4f7a5a',bx+x,2.65,bz+5.3,8));
+}
+
+// 列車：火車頭（爸爸）和車廂（媽媽）是分開的兩個物件，1966 年才掛在一起
+const train=new THREE.Group(), car=new THREE.Group(); scene.add(train,car);
+const wheels=[], winM=[], tags=[], busts=[], bustHair=[];
+function makeBust(m){ // 車窗裡的方塊人像：衣服用家族色
+  const e=c=>mat(c,{roughness:.55,emissive:c,emissiveIntensity:.3}),hair=e(m.f?'#3a241a':'#2b1d16'),b=new THREE.Group();
+  b.add(box(.74,.3,.04,e(m.c),0,-.34,0),box(.5,.44,.05,e('#F8D9BF'),0,.02,0),box(.56,.2,.06,hair,0,.2,0)); if(m.f)b.add(box(.12,.4,.06,hair,-.28,0,0),box(.12,.4,.06,hair,.28,0,0));
+  b.traverse(o=>{o.castShadow=false}); b.userData.hair=hair; return b;
+}
+function wheel(p,r,c,x,z){const g=new THREE.Group(),w=cyl(r,r,.18,c,0,0,0,24);w.rotation.x=PI/2;g.add(w,box(r*1.7,.12,.2,'#e9e2d0'),box(.12,r*1.7,.2,'#e9e2d0'));g.position.set(x,r+.3,z);p.add(g);wheels.push([g,r,p]);}
+{ const BLUE='#2E62B0', RED='#A8404E';
+  car.add(box(23.8,2.6,2.6,RED,-12.4,2.3,0,.18),box(23.84,.16,2.66,'#F3E9D2',-12.4,1.86,0),box(24,.45,2.5,'#cfd5dd',-12.4,3.72,0,.2),box(22.6,.5,2,'#30343c',-12.4,.85,0),box(.9,.3,.5,'#30343c',-.2,1.1,0));
+  for(const x of[-21.6,-20,-4.8,-3.2])for(const z of[-.78,.78])wheel(car,.45,'#3a3f48',x,z);
+  const gW=new THREE.PlaneGeometry(1.08,.98);
+  M.forEach((m,i)=>{
+    const wm=new THREE.MeshStandardMaterial({color:'#18202e',emissive:'#ffcf7a',emissiveIntensity:0,roughness:.3}); winM.push(wm);
+    for(const z of[1.31,-1.31]){const p=new THREE.Mesh(gW,wm);p.position.set(SX(i),2.78,z);if(z<0)p.rotation.y=PI;car.add(p);}
+    const b=makeBust(m); b.position.set(SX(i),2.78,1.33); car.add(b); busts.push(b); bustHair.push(b.userData.hair);
+    const tg=new THREE.Sprite(new THREE.SpriteMaterial({map:canvasTex(256,96,g=>{g.fillStyle=m.c;rr(g,4,4,248,88,30);g.fill();g.lineWidth=5;g.strokeStyle='#fff';g.stroke();g.fillStyle='#fff';g.font=`700 54px ${SANS}`;g.textAlign='center';g.textBaseline='middle';g.fillText(m.n,128,50);}),transparent:true,depthTest:false,fog:false}));
+    tg.position.set(SX(i),i%2?5.45:4.72,0); tg.renderOrder=5; car.add(tg); tags.push(tg);
+  });
+  // 蒸汽車頭
+  const L=new THREE.Group(); L.position.x=.5; train.add(L);
+  const lyingCyl=(r,len,c,x,y)=>{const m=cyl(r,r,len,c,x,y,0,24);m.rotation.z=PI/2;return m;};
+  L.add(box(7.6,.45,2.3,'#22252b',3.9,1,0),box(2,2.7,2.5,BLUE,1.2,2.55,0,.15),box(2.4,.25,2.8,'#cfd5dd',1.2,4,0,.1),
+    lyingCyl(1.02,4.4,'#2a5aa6',4.4,2.35),lyingCyl(1.06,.12,mat('#d9b44a',{metalness:.8,roughness:.3}),3.1,2.35),lyingCyl(1.06,.12,mat('#d9b44a',{metalness:.8,roughness:.3}),5.5,2.35),
+    lyingCyl(1.07,.7,'#1d2026',6.9,2.35),cyl(.42,.3,1.2,'#1d2026',6.7,3.8,0),cyl(.5,.42,.16,'#1d2026',6.7,4.45,0),
+    ball(.46,mat('#d9b44a',{metalness:.8,roughness:.3}),4.4,3.4,0),box(.25,.5,2.5,'#b8332e',7.65,1,0));
+  const cow=box(1.3,.7,2.2,'#b8332e',8,.62,0);cow.rotation.z=-.55;L.add(cow);
+  const cabW=mat('#18202e',{emissive:'#ffcf7a',emissiveIntensity:1.2});for(const z of[1.26,-1.26])L.add(box(1.1,.8,.04,cabW,1.2,3.1,z));
+  const cabDad=makeBust(M[0]); cabDad.position.set(1.2,3.17,1.32); L.add(cabDad); train.userData.dad=cabDad;   // 結婚前，爸爸在車頭的窗子裡
+  const hl=ball(.3,mat('#fff',{emissive:'#ffe9a8',emissiveIntensity:4}),7.3,3.0,0);L.add(hl);train.userData.hl=hl.material;train.userData.cab=cabW;
+  const beam=new THREE.Mesh(new THREE.ConeGeometry(4.5,30,24,1,true),new THREE.MeshBasicMaterial({color:'#ffe9a8',transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false}));
+  beam.rotation.z=PI/2;beam.position.set(22.5,2.6,0);L.add(beam);train.userData.beam=beam.material;
+  const pl=new THREE.PointLight('#ffe2a0',0,60,2);pl.position.set(11,2.4,0);L.add(pl);train.userData.pl=pl;
+  for(const z of[-.98,.98]){for(const x of[3.4,5,6.6])wheel(train,.78,'#B8332E',x,z);wheel(train,.45,'#3a3f48',8,z*.8);}
+  train.userData.rods=[-1.12,1.12].map(z=>{const r=box(3.5,.14,.1,mat('#d0d4da',{metalness:.7,roughness:.3}),5,1.08,z);train.add(r);return r;});
+}
+// 蒸汽（平常是白煙，1965 那段變成愛心）
+const hShape=new THREE.Shape();hShape.moveTo(0,-.5);hShape.bezierCurveTo(-1,.1,-.55,.8,0,.3);hShape.bezierCurveTo(.55,.8,1,.1,0,-.5);
+const heartGeo=new THREE.ExtrudeGeometry(hShape,{depth:.12,bevelEnabled:false});
+const puffs=[];{const g=new THREE.IcosahedronGeometry(1,1);for(let i=0;i<22;i++){
+  const a=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:'#fff',transparent:true,flatShading:true,roughness:1,depthWrite:false}));
+  const h=new THREE.Mesh(heartGeo,new THREE.MeshBasicMaterial({color:'#ff5c8a',transparent:true}));scene.add(a,h);puffs.push([a,h]);}}
+
+// 砌石紋：一塊塊深淺不同的石磚（石拱橋與隧道口共用）
+const brick=canvasTex(256,256,g=>{const q=rng(11);g.fillStyle='#8f8470';g.fillRect(0,0,256,256);   // 砌石紋：一塊塊深淺不同的石磚
+  for(let y=0;y<8;y++)for(let x=-1;x<4;x++){const v=190+q()*40|0;g.fillStyle=`rgb(${v+8},${v-6},${v-34})`;g.fillRect(x*64+(y%2)*32+2,y*32+2,60,28);if(q()<.18){g.fillStyle='#6f7a5599';g.fillRect(x*64+(y%2)*32+2,y*32+18,60,12);}}});
+brick.wrapS=brick.wrapT=THREE.RepeatWrapping;brick.repeat.set(1/8,1/8);
+// 山與隧道（只做一組，搬到離鏡頭最近的那座隧道）
+const massif=new THREE.Group(); scene.add(massif);
+{ // 鐵軌穿過的那道山脊：兩端是垂直的山壁，隧道口就開在山壁上
+  const rs=new THREE.Shape();[[-46,0],[-30,22],[-12,36],[4,43],[18,30],[34,14],[46,0]].forEach(([z,y],i)=>i?rs.lineTo(-z,y):rs.moveTo(-z,y));rs.closePath();
+  const ridge=new THREE.Mesh(new THREE.ExtrudeGeometry(rs,{depth:50,bevelEnabled:false}).rotateY(PI/2),mat('#6f9a6a',{flatShading:true,roughness:1}));ridge.position.x=-25;ridge.receiveShadow=true;massif.add(ridge);
+  [[-33,24,16,17,'#7aa873'],[33,-23,16,19,'#6a947a'],[33,25,15,14,'#7aa873'],[-33,-24,17,20,'#6a947a'],[-10,-64,60,96,'#5d8a72'],[42,-82,55,72,'#6a947a'],[-50,-76,50,62,'#55806a'],[8,54,42,38,'#7aa873']].forEach(([x,z,r,h,c],i)=>{
+    const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,14),mat(c,{flatShading:true,roughness:1}));m.position.set(x,h/2-.5,z);m.rotation.y=i*1.3;m.receiveShadow=true;massif.add(m);
+    if(h>60){const s=new THREE.Mesh(new THREE.ConeGeometry(r*.235,h*.22,14),mat('#f4f7fa',{flatShading:true}));s.position.set(x,h*.89-.2,z);s.rotation.y=i*1.3;massif.add(s);}
+  });
+  // 隧道口：砌石端牆、一塊塊拱石和拱心石、兩側斜撐翼牆、壓頂石、洞口上方與兩旁的灌木
+  const hs=new THREE.Shape();hs.moveTo(-2.7,0);hs.lineTo(-2.7,4.2);hs.absarc(0,4.2,2.7,PI,0,true);hs.lineTo(2.7,0);hs.closePath();
+  const holeG=new THREE.ShapeGeometry(hs,16).rotateY(PI/2), holeM=new THREE.MeshBasicMaterial({color:'#04050a'});
+  const wallT=brick.clone();wallT.repeat.set(17/8,9.5/8);wallT.needsUpdate=true;
+  const wallM=mat('#c9c4bb',{roughness:1,map:wallT}), wingM=mat('#bdb7ac',{roughness:1,map:brick}), stoneA=mat('#e4dccb'), stoneB=mat('#cbbfa8'), copeM=mat('#d9d2c2'), bushM=[mat('#4c8b47',{flatShading:true,roughness:1}),mat('#3c7541',{flatShading:true,roughness:1}),mat('#62a052',{flatShading:true,roughness:1})];
+  const tri=new THREE.Shape();tri.moveTo(0,0);tri.lineTo(5.5,0);tri.lineTo(.9,8.6);tri.lineTo(0,8.6);tri.closePath();
+  const wingG=new THREE.ExtrudeGeometry(tri,{depth:1.3,bevelEnabled:false}), bushG=new THREE.IcosahedronGeometry(1,1), q=rng(21);
+  for(const s of[-1,1]){const p=new THREE.Group(),hole=new THREE.Mesh(holeG,holeM);hole.position.x=.08;
+    p.add(box(2,9.5,17,wallM,-1,4.75,0),box(2.7,.55,18,copeM,-.9,9.75,0),box(2.2,1,17.4,wallM,-1.1,10.5,0),box(2.6,.4,17.8,copeM,-1,11.2,0),hole);
+    for(let k=0;k<=12;k++){const a=PI*k/12,st=box(.5,k==6?1.25:.85,.78,k%2?stoneA:stoneB,.2,0,0);st.position.set(k==6?.3:.2,4.2+3.15*Math.sin(a),-3.15*Math.cos(a));st.rotation.x=a-PI/2;p.add(st);}   // 拱石，正中是拱心石
+    for(const z of[-3.15,3.15])for(let k=0;k<4;k++)p.add(box(.5,.98,k%2?.95:.8,k%2?stoneB:stoneA,.2,.55+k*1.05,z));                                              // 拱腳的邊石
+    for(const z of[-1,1]){const w=new THREE.Mesh(wingG,wingM);w.position.set(-.2,0,z*5.2-(z>0?0:1.3));w.rotation.y=-z*.3;w.castShadow=w.receiveShadow=true;p.add(w,box(1,.35,1.7,copeM,.4,8.75,z*5.7));}   // 斜撐翼牆
+    for(let i=0;i<22;i++){const top=i<13,b=new THREE.Mesh(bushG,bushM[i%3]),r=1.1+q()*1.3;b.scale.set(r,r*.8,r);
+      top?b.position.set(-1.6-q()*2.5,11.3+q()*1.4,-9+i*1.5+q()):b.position.set(-.5+q()*3.5,.6+q()*.8,(i%2?1:-1)*(8.5+q()*3.5));b.castShadow=true;p.add(b);}
+    p.position.x=s*PD;if(s<0)p.rotation.y=PI;massif.add(p);}
+}
+// 河谷與石拱橋（同樣只做一組）；地面、樹、田在河谷範圍內用裁切平面挖空
+const valley=new THREE.Group(); scene.add(valley);
+{ const gm=mat('#6f9d58',{roughness:1,side:THREE.DoubleSide}), len=Math.hypot(VW-VF,VD), ang=Math.atan2(VD,VW-VF), r=rng(5), o=new THREE.Object3D();
+  for(const s of[-1,1]){const p=new THREE.Mesh(new THREE.PlaneGeometry(len,800).rotateX(-PI/2),gm);p.rotation.z=s*ang;p.position.set(s*(VW+VF)/2,-VD/2,260);p.receiveShadow=true;valley.add(p);}
+  const river=new THREE.Mesh(new THREE.PlaneGeometry(2*VF+2,800).rotateX(-PI/2),mat('#3d9bd6',{roughness:.2,metalness:.1,emissive:'#1b6fae',emissiveIntensity:.35}));river.position.set(0,-VD+.4,260);river.receiveShadow=true;
+  const wall=new THREE.Mesh(new THREE.PlaneGeometry(2*VW,VD),mat('#7d8a6d',{roughness:1}));wall.position.set(0,-VD/2,-140);
+  const lid=new THREE.Mesh(new THREE.PlaneGeometry(2*VW,2000).rotateX(-PI/2),mat('#86b35f',{roughness:1}));lid.position.set(0,0,-1140);
+  valley.add(river,wall,lid);
+  const fallM=mat('#eef8ff',{emissive:'#cfe9ff',emissiveIntensity:.7});
+  for(const[x,w]of[[0,12],[-118,6],[96,8]]){const h=VD+floorY(x),f=new THREE.Mesh(new THREE.PlaneGeometry(w,h),fallM);f.position.set(x,-h/2,-139.6);valley.add(f);}   // 瀑布
+  const rockM=mat('#8d9685',{flatShading:true,roughness:1});
+  for(let i=0;i<16;i++){const x=(i+.5)/16*2*VW-VW+(r()-.5)*14,h=18+r()*30,m=new THREE.Mesh(new THREE.ConeGeometry(10+r()*9,h,6),rockM);m.position.set(x,floorY(x)+h/2-2,-128+r()*10);m.rotation.y=i;valley.add(m);}  // 遠處的岩壁
+  for(let i=0;i<9;i++){const m=new THREE.Mesh(new THREE.IcosahedronGeometry(1.6+r()*2,0),rockM);m.scale.y=.5;m.position.set((r()-.5)*2*VF*.8,-VD+.6,-100+i*26+r()*8);if(Math.abs(m.position.z)<6)m.position.z+=14;valley.add(m);}  // 河裡的石頭
+  // 石拱橋：砌石牆面、拱圈、橋墩上方的小拱窗、分水尖橋墩基座、簷口與護欄柱
+  const sh=new THREE.Shape();sh.moveTo(-VW-3,-VD-2);sh.lineTo(-VW-3,0);sh.lineTo(VW+3,0);sh.lineTo(VW+3,-VD-2);sh.closePath();
+  const rings=[], archS=(c,y0,w,h)=>{const p=new THREE.Shape();p.moveTo(c-w,y0);p.lineTo(c-w,y0+h);p.absarc(c,y0+h,w,PI,0,true);p.lineTo(c+w,y0);p.closePath();return p;};
+  for(let c=-VW+10;c<VW;c+=20){const h=new THREE.Path();h.moveTo(c-7.5,-VD-1);h.lineTo(c-7.5,-13.5);h.absarc(c,-13.5,7.5,PI,0,true);h.lineTo(c+7.5,-VD-1);h.closePath();sh.holes.push(h);
+    const g=new THREE.Shape();g.moveTo(c-8.7,-19);g.lineTo(c-8.7,-13.5);g.absarc(c,-13.5,8.7,PI,0,true);g.lineTo(c+8.7,-19);g.lineTo(c+7.5,-19);g.lineTo(c+7.5,-13.5);g.absarc(c,-13.5,7.5,0,PI,false);g.lineTo(c-7.5,-19);g.closePath();rings.push(g);}
+  const stone=mat('#c8baa0',{roughness:.95}), wallM=mat('#fff',{roughness:.95,map:brick}), pale=mat('#e6dbc4',{roughness:.9}), dim=mat('#9d927f',{roughness:1}),
+    bridge=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:4.2,bevelEnabled:false,curveSegments:10}),wallM),
+    ring=new THREE.Mesh(new THREE.ExtrudeGeometry(rings,{depth:4.7,bevelEnabled:false,curveSegments:10}),pale);
+  bridge.position.z=-2.1;ring.position.z=-2.35;bridge.castShadow=bridge.receiveShadow=ring.receiveShadow=true;
+  valley.add(bridge,ring,box(2*VW+6,.55,.3,stone,0,.27,2.05),box(2*VW+6,.55,.3,stone,0,.27,-2.05),box(2*VW+6,.6,5.1,pale,0,-.95,0),box(2*VW+6,.35,4.6,dim,0,-1.7,0));
+  const nicheG=new THREE.ShapeGeometry(archS(0,0,1.2,2.4),8), frameG=new THREE.ShapeGeometry(archS(0,-.35,1.75,2.75),8), darkM=mat('#3b332a',{roughness:1}), footG=new THREE.CylinderGeometry(4.2,5,1,4).rotateY(PI/4);
+  for(let x=-VW;x<=VW;x+=20){
+    for(const s of[-1,1]){const f=new THREE.Mesh(frameG,pale),n=new THREE.Mesh(nicheG,darkM);f.position.set(x,-9.2,s*2.13);n.position.set(x,-9.2,s*2.16);if(s<0)f.rotation.y=n.rotation.y=PI;valley.add(f,n,box(.7,1.15,.55,stone,x,.55,s*2.05));}
+    const y=floorY(x),h=Math.min(9,-y-16);if(h<2)continue;                                   // 河谷夠深的地方，橋墩底下加分水尖基座
+    const foot=new THREE.Mesh(footG,dim),cap=new THREE.Mesh(footG,pale);foot.scale.set(1,h,1.6);foot.position.set(x,y+h/2-.5,0);cap.scale.set(1.08,.6,1.7);cap.position.set(x,y+h-.3,0);foot.castShadow=foot.receiveShadow=true;valley.add(foot,cap);}
+  // 谷底的小村落
+  const roofG=new THREE.ConeGeometry(2.7,1.7,4).rotateY(PI/4), roofM=mat('#b5533c');
+  for(let i=0;i<14;i++){const s=i%2?1:-1,x=s*(VF+6+r()*70),z=-95+r()*75,y=floorY(x),g=new THREE.Group(),rf=new THREE.Mesh(roofG,roofM);
+    rf.position.y=3.05;rf.castShadow=true;g.add(box(3.2,2.2,2.8,i%3?'#f1e6cf':'#e7d3b4',0,1.1,0),rf);g.position.set(x,y,z);g.rotation.y=r()*.8;g.scale.setScalar(1.3+r()*.5);valley.add(g);}
+  // 山坡上的樹（顏色跟著季節）
+  const n=170,vl=mat('#3f8f4a',{flatShading:true}),tr=new THREE.InstancedMesh(TREES[1],vl,n),tr2=new THREE.InstancedMesh(TREES[2],vl,n);valley.userData.leaf=vl;
+  for(let i=0;i<n;i++){const u=.06+r()*.9,s=i%2?1:-1,k=.8+r()*.8,x=s*(VF+u*(VW-VF));o.position.set(x,floorY(x)-.3,r()<.8?-125+r()*112:84+r()*110);o.rotation.y=i;o.scale.setScalar(i%3?k:0);o.updateMatrix();tr.setMatrixAt(i,o.matrix);o.scale.setScalar(i%3?0:k);o.updateMatrix();tr2.setMatrixAt(i,o.matrix);}   // 杉樹和闊葉樹混種
+  tr.castShadow=tr2.castShadow=true;valley.add(tr,tr2);
+}
+
+// 花瓣（只落在新人身上）
+const petals=new THREE.InstancedMesh(new THREE.PlaneGeometry(.2,.13),new THREE.MeshBasicMaterial({color:'#ffb3cc',side:THREE.DoubleSide}),80);petals.frustumCulled=false;scene.add(petals);
+const dummy=new THREE.Object3D();
+
+// 片尾：星星排成 60 → 鑽石 → 煙火
+const NP=1300, pGeo=new THREE.BufferGeometry(), pPos=new Float32Array(NP*3), pA=[],pS=[],pR=[];
+{const c=document.createElement('canvas');c.width=256;c.height=128;const g=c.getContext('2d',{willReadFrequently:true});g.font='900 124px Arial, sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillStyle='#fff';g.fillText('60',128,68);
+ const d=g.getImageData(0,0,256,128).data,pts=[];for(let y=0;y<128;y+=2)for(let x=0;x<256;x+=2)if(d[(y*256+x)*4+3]>128)pts.push([x,y]);
+ const r=rng(60);for(let i=0;i<NP;i++){const[x,y]=pts[Math.floor(r()*pts.length)];pA.push([(x-128+r()*2)*.34,(64-y+r()*2)*.34,(r()-.5)*2]);
+  pS.push([(r()-.5)*520,-20+r()*150,-60-r()*120,r()]);pR.push([r()*PI*2,24+r()*7,(r()-.5)*1.6,r()]);}
+ pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));}
+const sixty=new THREE.Points(pGeo,new THREE.PointsMaterial({color:'#fff3cf',size:1.5,map:dotTex,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));sixty.frustumCulled=false;scene.add(sixty);
+const pmrem=new THREE.PMREMGenerator(renderer), envMap=pmrem.fromScene(new RoomEnvironment(),.04).texture;
+const diamond=new THREE.Group();{
+  // 明亮式切工：桌面、星面、風箏面、上腰面、腰圍、下腰面、亭部主面，共 8 等分；每個切面帶一點不同的色光
+  const P=[],C=[],col=new THREE.Color(),r=rng(60),A=PI/4,V=(rad,y,a)=>[rad*Math.cos(a),y,rad*Math.sin(a)];
+  const TINT=['#ffffff','#ffffff','#dff1ff','#c4e2ff','#ffe6f3','#fff4d2','#dcfff3','#e9e0ff'];
+  const tri=(a,b,c)=>{const u=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],v=[c[0]-a[0],c[1]-a[1],c[2]-a[2]],n=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];
+    if(n[0]*(a[0]+b[0]+c[0])+n[1]*(a[1]+b[1]+c[1]+.6)+n[2]*(a[2]+b[2]+c[2])<0)[b,c]=[c,b];   // 法線一律朝外
+    P.push(...a,...b,...c);for(let i=0;i<3;i++)C.push(col.r,col.g,col.b);};
+  const facet=(...ts)=>{col.set(TINT[Math.floor(r()*TINT.length)]);ts.forEach(t=>tri(...t));}, shade=(k,...ts)=>{col.set(TINT[Math.floor(r()*TINT.length)]).multiplyScalar(k);ts.forEach(t=>tri(...t));};
+  const top=[0,.37,0],cu=[0,-.9,0];
+  for(let k=0;k<8;k++){
+    const T0=V(.55,.37,k*A),T1=V(.55,.37,(k+1)*A),M0=V(.8,.215,(k+.5)*A),Mp=V(.8,.215,(k-.5)*A),
+      G0=V(1,.03,k*A),G1=V(1,.03,(k+.5)*A),G2=V(1,.03,(k+1)*A),g0=V(1,-.03,k*A),g1=V(1,-.03,(k+.5)*A),g2=V(1,-.03,(k+1)*A),
+      P0=V(.25,-.7,(k+.5)*A),Pp=V(.25,-.7,(k-.5)*A);   // 亭部主面是從尖底拉到腰圍的長風箏面，兩片主面之間夾著下腰面
+    col.set('#ffffff');tri(top,T0,T1);
+    facet([T0,T1,M0]);facet([T0,Mp,G0],[T0,G0,M0]);facet([M0,G0,G1]);facet([M0,G1,G2]);
+    facet([G0,G1,g1],[G0,g1,g0]);facet([G1,G2,g2],[G1,g2,g1]);
+    shade(.8,[g0,g1,P0]);shade(1.1,[g1,g2,P0]);shade(k%2?.62:1,[cu,Pp,g0],[cu,g0,P0]);   // 下半部：明暗交錯，切面才看得出來
+  }
+  const gemG=new THREE.BufferGeometry();gemG.setAttribute('position',new THREE.Float32BufferAttribute(P,3));gemG.setAttribute('color',new THREE.Float32BufferAttribute(C,3));gemG.computeVertexNormals();
+  const gm=o=>new THREE.MeshPhysicalMaterial({color:'#e4f4ff',vertexColors:true,metalness:1,roughness:.2,envMap,envMapIntensity:.6,iridescence:1,iridescenceIOR:1.9,emissive:'#5fb0ff',emissiveIntensity:.3,fog:false,...o});
+  const shell=new THREE.Mesh(gemG,gm({transparent:true,opacity:.8})), core=new THREE.Mesh(gemG,gm({emissive:'#8fc8ff',emissiveIntensity:.55}));   // 半透明外殼裡再包一顆，看得到內部切面
+  core.scale.setScalar(.62);core.rotation.y=A/2;core.position.y=-.03;shell.renderOrder=1;
+  const edges=new THREE.LineSegments(new THREE.EdgesGeometry(gemG,2),new THREE.LineBasicMaterial({color:'#ffffff',transparent:true,opacity:.4,fog:false}));edges.renderOrder=2;   // 切面的稜線
+  const inner=new THREE.Group();inner.add(core,shell,edges);diamond.add(inner);diamond.userData.inner=inner;
+  // 切面上的閃光：跟著鑽石轉，輪流亮起
+  const glintT=canvasTex(128,128,g=>{g.translate(64,64);for(let k=0;k<2;k++){g.rotate(PI/2);const d=g.createLinearGradient(-64,0,64,0);d.addColorStop(0,'#fff0');d.addColorStop(.5,'#fff');d.addColorStop(1,'#fff0');g.fillStyle=d;g.beginPath();g.ellipse(0,0,62,3,0,0,7);g.fill();}
+    const d=g.createRadialGradient(0,0,0,0,0,16);d.addColorStop(0,'#fff');d.addColorStop(1,'#fff0');g.fillStyle=d;g.fillRect(-16,-16,32,32);});
+  diamond.userData.glints=[[.55,.4,0],[.8,.24,1.5],[1.02,0,3.1],[.8,.24,4.3],[1.02,0,5.4],[.55,.4,2.4],[.42,-.54,.9],[1.02,0,1.2]].map(([rad,y,a])=>{
+    const g=new THREE.Sprite(new THREE.SpriteMaterial({map:glintT,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));g.position.set(...V(rad,y,a));inner.add(g);return g;});
+  const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:dotTex,color:'#9fd0ff',transparent:true,opacity:.22,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));glow.scale.setScalar(5);
+  const flare=new THREE.Sprite(new THREE.SpriteMaterial({map:canvasTex(256,256,g=>{g.translate(128,128);for(let k=0;k<4;k++){g.rotate(PI/4);const d=g.createLinearGradient(-128,0,128,0);d.addColorStop(0,'#fff0');d.addColorStop(.5,k%2?'#ffffff88':'#fff');d.addColorStop(1,'#fff0');g.fillStyle=d;g.beginPath();g.ellipse(0,0,k%2?70:126,k%2?2.5:4,0,0,7);g.fill();}}),transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));
+  diamond.add(glow,flare);diamond.userData.flare=flare;diamond.visible=false;scene.add(diamond);}
+const FW=[[144,-58,44,'#ffd76a'],[145.5,52,50,'#ff7ea8'],[147,-30,62,'#8fd0ff'],[148.5,70,38,'#b7ff9a'],[150,-76,34,'#ffa066'],[151.5,34,64,'#d9a6ff'],[152.25,-46,56,'#ffd76a'],[153,60,44,'#8fd0ff'],[154.5,0,70,'#ff7ea8']];   // 每一發都落在拍點上（一拍 .75 秒）
+const FC=FW.map(w=>new THREE.Color(w[3])), FN=90, fGeo=new THREE.BufferGeometry(), fPos=new Float32Array(FW.length*FN*3), fCol=new Float32Array(FW.length*FN*3), fDir=[];
+{const r=rng(9);for(let i=0;i<FW.length*FN;i++){const a=r()*PI*2,z=r()*2-1,s=Math.sqrt(1-z*z),k=.75+r()*.25;fDir.push([s*Math.cos(a)*k,s*Math.sin(a)*k,z*k]);}
+ fGeo.setAttribute('position',new THREE.BufferAttribute(fPos,3));fGeo.setAttribute('color',new THREE.BufferAttribute(fCol,3));}
+const fire=new THREE.Points(fGeo,new THREE.PointsMaterial({size:1.7,map:dotTex,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));fire.frustumCulled=false;fire.visible=false;scene.add(fire);
+
+/* ───────── 分鏡：攝影機 ───────── */
+const tv=(v,x)=>[[x+15,2.4,12,x+2,2.2,0],[x-8,15,32,x-8,2,0],[x+7.5,1.1,5.5,x+4.2,1.3,0],[x-30,3.2,9,x-10,2.6,0]][v];
+const WS=x=>[x-4,3.3,12,x-8,2.9,0], CL=x=>[x+26,1.7,24,x-6,4,0];
+const chase=(x,cx)=>[Math.min(x-26,cx-PD-40),3.4,8,x+2,2.6,0];                           // 跟在車尾，看它鑽進隧道
+const exitShot=(x,cx)=>[cx+PD+34,2.1,7.5,Math.max(cx+PD+2,x+2),2.6,0];                   // 等在隧道口，看它衝出來
+// 河谷的五個鏡位：高處迎面 → 貼著山坡往上看 → 河面仰望（瀑布當背景）→ 空中繞行俯瞰 → 貼著車窗飛
+const valA=(x,v)=>[v-VW+118,34,88,x-8,0,0];
+const valB=(x,v)=>[x+5,2.8+Math.max(-9,.5*(floorY(x+18-v)+5)),30,x-10,2.8,0];   // 同一個仰角拉近：整列車入鏡，名璋、敬凱、敬達那三格落在畫面中間偏左
+const valC=(x,v)=>[v+14,-VD+22,82,x-8,-17,0];
+const valD=(t,x)=>{const a=lerp(110,70,ss(96.8,101.4,t))*PI/180;return[x-9+30*Math.cos(a),24,30*Math.sin(a),x-9,0,0];};
+function orbitShot(x,p,hi){const a=(40+115*Math.sin(PI*p))*PI/180;return[x-8+34*Math.cos(a),7+hi*Math.sin(PI*p),34*Math.sin(a),x-8,2,0];}
+const SHOTS=[ // [開始時間, 鏡頭, 硬切?]；沒標硬切的會用 1.6 秒滑過去
+ [54,(t,x)=>tv(0,x)],[62.5,(t,x)=>tv(1,x)],[67.5,(t,x)=>WS(x)],[71.5,(t,x)=>CL(x)],[74.6,(t,x)=>chase(x,TUN[1])],
+ [77.5,(t,x)=>exitShot(x,TUN[1]),1],[80.2,(t,x)=>tv(1,x)],
+ [86,(t,x)=>valA(x,VAL[0]),1],[89,(t,x)=>valB(x,VAL[0]),1],[92.6,(t,x)=>valC(x,VAL[0]),1],[96.8,valD,1],[101.2,(t,x)=>WS(x)],
+ [104.6,(t,x)=>orbitShot(x,(t-104.6)/7.4,11)],[111.8,(t,x)=>chase(x,TUN[2])],
+ [113.5,(t,x)=>exitShot(x,TUN[2]),1],[116.2,(t,x)=>[x-30.5,3.2,6.6,x+SX(14),4,1]]];   // 最後：從車尾看過去，特寫玉麟那一格和花瓣
+function shotCam(t,x){let i=SHOTS.length-1;while(SHOTS[i][0]>t)i--;const[a,f,cut]=SHOTS[i],c=f(t,x);
+  return cut||!i?c:mixP(SHOTS[i-1][1](t,x),c,ss(a,a+1.6,t));}
+function camAt(t,x){
+  if(t<12)return[22,1,3.2,x+6,2.2,0];
+  if(t<20.25){const c=1993;return mixP([c+34,40,78,c,6,-30],[c+10-ss(17,20.25,t)*2,2.4,13,c,2.5,0],s5(cl((t-12)/6.5)));}
+  if(t<28.5){const c=3001,a=lerp(-.7,.5,ss(20.25,28.5,t));return[c+17*Math.sin(a),3,17*Math.cos(a),c,2.7,0];}
+  if(t<36){const c=3995;return mixP([c-9+(t-28.5)*.25,1.9,13,c,2.4,0],chase(x,TUN[0]),ss(31.5,34,t));}
+  if(t<60){const c=6000.4,a=lerp(-.5,.5,cl((t-42)/10));return mixP(mixP([6014,3.6,25,6003,2.5,0],[c+12*Math.sin(a),3,12*Math.cos(a),c,2.4,0],ss(41.2,43.5,t)),tv(0,x),ss(53.6,58.5,t));}
+  if(t<120)return shotCam(t,x);
+  const p=cl((t-120.75)/11.25),lx=x+lerp(-.5,-23.5,p),D=[lx+3,4,13,lx,3.9,0];
+  if(t<132)return mixP(shotCam(t,x),D,ss(120,121.6,t));
+  const ax=AX(t),q=ss(132,138,t),Wd=[ax+4,lerp(5,2.5,q),36,ax-8,lerp(8,17,q),-40];
+  if(t<144)return mixP(D,Wd,ss(132,134.8,t));
+  const a=lerp(75,105,cl((t-144)/12))*PI/180,e=ss(156,168,t);
+  const kx=ax-8+38*Math.cos(a),kz=38*Math.sin(a),tx=lerp(ax-8,kx+(ax-8-kx)*(kz+40)/(kz+120),ss(155,159.5,t));   // 2:35 起把鏡頭慢慢轉正，鑽石回到畫面正中間
+  return mixP(Wd,[kx,3+e*6,kz,tx,15-e*3,-40],ss(144,146.5,t));
+}
+
+/* ───────── 每一格畫面（完全由時間 t 決定） ───────── */
+const season=[new THREE.Color('#7cc05a'),new THREE.Color('#2f8a45'),new THREE.Color('#e08a3a'),new THREE.Color('#a9c4ae')],SAKURA=new THREE.Color('#f4a9c4'),GREEN=new THREE.Color('#3f8f4a');
+const grey=new THREE.Color('#d9d9d9'), dark=new THREE.Color('#2b1d16'), brown=new THREE.Color('#b98a5a'), mdark=new THREE.Color('#3a241a');
+function litOf(i,t){for(const[a,b]of LIT[i])if(t>=a&&t<b)return t-a;return -1;}
+const v3=new THREE.Vector3();
+function frame(t){
+  const x=X(t), th=slope(t);
+  setTod(t);
+  sky.material.uniforms.top.value.copy(tod.top);sky.material.uniforms.hor.value.copy(tod.hor);
+  scene.fog.color.copy(tod.hor).lerp(tod.top,.25);
+  hemi.color.copy(tod.hor);hemi.intensity=tod.hi;sun.color.copy(tod.sun);sun.intensity=tod.si;
+  stars.material.opacity=tod.st;bloom.strength=lerp(.3,.6,tod.st);
+  lampM.emissiveIntensity=tod.st*4;decor.userData.wm.emissiveIntensity=tod.st*1.6;signM.color.setScalar(lerp(1,.6,tod.st));
+  // 攝影機（上坡時把「上」的方向歪一點，地平線留在原位，看起來就是火車在爬坡）
+  const c=camAt(t,x);cam.position.set(c[0],c[1],c[2]);cam.up.set(Math.sin(th),Math.cos(th),0);cam.lookAt(c[3],c[4],c[5]);
+  heaven.position.copy(cam.position);heaven.rotation.z=-th;
+  ground.position.x=cam.position.x;track.position.x=Math.round(c[3]/36)*36;
+  const k0=Math.round(c[3]/TW),hs=(t<12?.8:t<20.25?1.25:t<28.5?.18:t<36?1.25:lerp(1.25,.7,ss(56,66,t)))+Math.abs(th)*8;
+  tiles.forEach((g,j)=>{g.position.x=(k0+j-1)*TW;g.userData.hills.scale.y=hs;});
+  massif.position.x=near(TUN,c[3]);massif.visible=Math.abs(massif.position.x-c[3])<700;
+  valley.position.x=near(VAL,c[3]);clipA.constant=valley.position.x-VW;clipB.constant=-valley.position.x-VW;
+  sun.target.position.set(c[3],0,0);sun.position.set(c[3]-40,90,70);
+  const el=tod.el*PI/180;sunDisc.visible=tod.el>0;sunDisc.position.set(1500*Math.cos(el)*.45,1500*Math.sin(el),-1500*Math.cos(el)*.89);sunDisc.material.color.copy(tod.sun).multiplyScalar(2.2);
+  // 樹的季節
+  if(t<36)leafMat.color.copy(GREEN);else if(t<62)leafMat.color.lerpColors(GREEN,SAKURA,1-ss(56,62,t));
+  else if(t<122){const u=(t-62)/12,i=Math.floor(u)%4;leafMat.color.lerpColors(season[i],season[(i+1)%4],ss(.3,1,fract(u)));}
+  else leafMat.color.lerpColors(season[1],GREEN,ss(122,128,t));
+  valley.userData.leaf.color.copy(leafMat.color);
+  // 火車頭與車廂
+  train.visible=t<20.25||t>=28.5;train.position.x=x;
+  car.visible=t<12||(t>=20.25&&t<28.5)||t>=36;car.position.x=t<12?x:t<36?3004.4:t<41?6000:x;
+  for(const[g,r,p]of wheels)g.rotation.z=-p.position.x/r;
+  const wa=-x/.78;for(const r of train.userData.rods){r.position.x=5.5+.42*Math.cos(wa);r.position.y=1.08+.42*Math.sin(wa);}
+  const tun=massif.visible?cl(1.5-Math.abs(x-massif.position.x)/60):0, dk=Math.max(tod.st,tun), born=t>=12&&t<20.25?back((t-13.5)/.5):1;
+  train.userData.beam.opacity=Math.max(tod.st*.09,tun*.035);train.userData.pl.intensity=dk*60;train.userData.hl.emissiveIntensity=(2+dk*5)*born;train.userData.cab.emissiveIntensity=1.2*born;
+  let riders=0;
+  train.userData.dad.scale.setScalar(t>=13.5&&t<41.25?Math.max(.001,.92*back((t-13.5)/.4)):.001);
+  for(const w of winM)w.emissiveIntensity=0;
+  M.forEach((m,i)=>{
+    const s=litOf(i,t),r=t-ROLL(i),sl=i==1&&t<41.25?0:i;   // 結婚前媽媽坐第一格，結婚後爸爸第一格、媽媽第二格
+    if(s>=0){winM[sl].emissiveIntensity=1.25+3*Math.exp(-s*3)+(r>0?2.5*Math.exp(-r*2.5):0);riders++;}
+    busts[i].scale.setScalar(s<0?.001:back(s/.4));busts[i].position.x=tags[i].position.x=SX(sl);
+    const a=s>=0&&s<2.8?Math.min(back(s/.35),ss(2.8,2.2,s)):r>0&&t<136.6?Math.min(back(r/.35),1-ss(134.6,136.6,t)):0;
+    tags[i].visible=a>.01;tags[i].material.opacity=cl(a);
+    if(a>.01){const d=cl(cam.position.distanceTo(v3.set(car.position.x+SX(sl),5,0))/16,1,4.5),k=d*a;tags[i].scale.set(1.75*k,.66*k,1);tags[i].position.y=lerp(4.6+(i%3)*.75*d,2.78,ss(134,136.4,t));}   // 2:14 起名牌往各自的車窗收攏、淡出 // 遠景時名牌放大，才看得到
+  });
+  bustHair[0].color.lerpColors(dark,grey,ss(78,118,t));bustHair[0].emissive.copy(bustHair[0].color);   // 爸媽的頭髮跟著歲月變白
+  bustHair[1].color.lerpColors(mdark,brown,ss(78,118,t));bustHair[1].emissive.copy(bustHair[1].color);
+  // 蒸汽（還沒「出生」的火車頭不冒煙；婚禮時冒愛心）
+  const heartMode=t>=41.2&&t<54;
+  puffs.forEach(([a,h],i)=>{
+    const age=fract(t*.45+i/22),te=t-age*2.2,o=heartMode?h:a;a.visible=h.visible=false;if(!train.visible||(te>=12&&te<13.5))return;
+    o.visible=true;o.position.set(X(te)+7.2+Math.sin(i*5)*.2*age,4.6+age*4+Math.sin(i*3)*.4*age,Math.sin(i*7)*.5*age);
+    o.scale.setScalar(heartMode?.5+age*1.2:.35+age*1.7);o.material.opacity=.8*Math.pow(1-age,1.3);
+  });
+  // 車站
+  const st=stationAt(t);plats.visible=decor.visible=!!st;
+  if(st){plats.position.x=st.p;decor.position.x=st.x;const tx=signTex(st.n,st.e);if(signM.map!==tx){signM.map=tx;signM.needsUpdate=true;}}
+  // 花瓣：婚禮，以及每一位新家人
+  let pc=null;
+  if(t>42.3&&t<53)pc=[6000.3,ss(42.3,43.3,t)*(1-ss(51.6,53,t)),0];
+  for(const s of STOPS){const a=s.T+LITD(s);if(s.w&&t>a-.2&&t<a+3.2)pc=[x+SX(s.m[0]),ss(a-.2,a+.5,t)*(1-ss(a+2.4,a+3.2,t)),1.3];}
+  petals.visible=!!pc;
+  if(pc){for(let i=0;i<80;i++){const a=i*2.399,r=.3+((i*37)%17)/17*2.1,ph=((i*53)%29)/29;
+    dummy.position.set(pc[0]+Math.cos(a)*r+Math.sin(t*1.7+i)*.25,.7+(1-fract(t*.22+ph))*6.5,pc[2]+Math.sin(a)*r*.7);
+    dummy.rotation.set(t*2+i,t*3+i*2,i);dummy.scale.setScalar(pc[1]);dummy.updateMatrix();petals.setMatrixAt(i,dummy.matrix);}
+    petals.instanceMatrix.needsUpdate=true;}
+  // 片尾特效
+  const ax=AX(t),cx=ax-8,cy=38+15*ss(143,147.5,t)*(1-ss(155,158.5,t)),cz=-120;   // 祝福字幕出現時鑽石慢慢升高讓位，2:35 再慢慢降回來
+  sixty.visible=t>130.5;
+  if(sixty.visible){
+    sixty.material.opacity=ss(130.5,133,t)*(1-ss(163,167,t));
+    for(let i=0;i<NP;i++){const s=pS[i],a=pA[i],r=pR[i],u=s5(cl((t-132-s[3]*1.6)/2.6)),w=s5(cl((t-137.9-r[3]*.8)/1.6)),an=r[0]+t*.28;
+      const rx=Math.cos(an)*r[1],ry=Math.sin(an)*r[1]*.28+r[2],rz=Math.sin(an)*r[1]*.5;
+      pPos[i*3]=cx+lerp(lerp(s[0],a[0],u),rx,w);pPos[i*3+1]=cy+lerp(lerp(s[1],a[1],u),ry,w);pPos[i*3+2]=cz+lerp(lerp(s[2],a[2],u),rz,w);}
+    pGeo.attributes.position.needsUpdate=true;
+  }
+  diamond.visible=t>=138;
+  if(diamond.visible){const d=15*back((t-138)/1.3);diamond.position.set(cx,cy,cz);diamond.scale.setScalar(Math.max(d,.01));diamond.userData.inner.rotation.set(.3,t*.6,.12);
+    diamond.userData.flare.scale.setScalar(2.3+Math.sin(t*2.3)*.5);diamond.userData.flare.material.opacity=.55;diamond.userData.flare.material.rotation=t*.15;
+    diamond.userData.glints.forEach((g,i)=>{const p=Math.pow(Math.max(0,Math.sin(t*1.9+i*2.3)),10);g.material.opacity=p*.9;g.scale.setScalar(.25+p*.5);});}
+  fire.visible=t>143.9&&t<158;
+  if(fire.visible){FW.forEach(([t0,dx,y,col],b)=>{const age=t-t0,on=age>0&&age<2.8,r=16*(1-Math.exp(-2.4*age)),f=on?Math.pow(1-age/2.8,1.5)*1.5:0,c=FC[b];
+    for(let i=0;i<FN;i++){const q=(b*FN+i)*3,d=fDir[b*FN+i];fPos[q]=cx+dx+d[0]*r;fPos[q+1]=y+d[1]*r-2.2*age*age*(on?1:0);fPos[q+2]=cz+12+d[2]*r;fCol[q]=c.r*f;fCol[q+1]=c.g*f;fCol[q+2]=c.b*f;}});
+    fGeo.attributes.position.needsUpdate=fGeo.attributes.color.needsUpdate=true;}
+  return riders;
+}
+
+/* ───────── 2D 疊字（字幕、年份、乘客數、轉場） ───────── */
+const out=document.getElementById('out'), ctx=out.getContext('2d');
+function txt(s,x,y,px,a,{font=SERIF,w=700,al='center',ls=0,col='#fff'}={}){
+  if(a<=.01||!s)return;ctx.globalAlpha=cl(a);ctx.font=`${w} ${px}px ${font}`;ctx.textAlign=al;ctx.letterSpacing=ls+'px';ctx.fillStyle=col;
+  ctx.shadowColor='rgba(0,0,0,.6)';ctx.shadowBlur=px*.3;ctx.shadowOffsetY=px*.05;ctx.fillText(s,x+(al=='center'?ls/2:0),y);ctx.shadowColor='transparent';ctx.globalAlpha=1;
+}
+function overlay(t,riders){
+  ctx.globalAlpha=1;ctx.drawImage(renderer.domElement,0,0);
+  ctx.fillStyle='#000';ctx.fillRect(0,0,W,64);ctx.fillRect(0,H-64,W,64);
+  const y=yearAt(t);
+  if(y){txt(''+y[0],104,168,92,1,{al:'left',ls:4});txt(y[1],104+250,160,36,.9,{al:'left',font:SANS,w:600});}
+  if(t>36.5&&t<165){const a=ss(36.5,38,t);ctx.globalAlpha=a;
+    M.forEach((m,i)=>{ctx.fillStyle=litOf(i,t)>=0?m.c:'#ffffff33';rr(ctx,W-104-(14-i)*34-26,118,26,26,8);ctx.fill();if(litOf(i,t)>=0){ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();}});
+    txt(`乘客 ${riders} / 15`,W-104,186,30,a*.95,{al:'right',font:SANS,w:600});}
+  for(const[a,b,h,s,big]of CAPS){if(t<a||t>b)continue;const al=ss(a,a+.7,t)*(1-ss(b-.7,b,t)),dy=(1-ss(a,a+.9,t))*18;
+    if(big){const o=big>1?110+(a>150?95*ss(158.2,161.8,t):0):0;   // 最後一句：列車離開後字幕緩緩下移到鑽石下方
+      txt(h,W/2,470+o+dy,h.length>8?112:168,al,{ls:h.length>8?10:36});txt(s,W/2,590+o*.8+dy,46,al,{w:600,ls:4});}
+    else{txt(h,W/2,H-196+dy,76,al,{ls:3});txt(s,W/2,H-122+dy,38,al*.95,{font:SANS,w:500,ls:1});}}
+  let wf=0;for(const c of[12,20.25,28.5])wf=Math.max(wf,1-Math.abs(t-c)/.55);
+  if(t>137.6)wf=Math.max(wf,t<138?(t-137.6)/.4*.85:.85*Math.exp(-(t-138)*3));
+  if(wf>0){ctx.globalAlpha=cl(wf);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);}
+  const bf=Math.max(1-ss(0,2.4,t),ss(164.8,167.6,t),...[36,77.5,113.5].map(c=>ss(c-.6,c-.1,t)*(1-ss(c+.05,c+.5,t)))); // 進隧道＝畫面暗下來
+  if(bf>0){ctx.globalAlpha=bf;ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);}
+  ctx.globalAlpha=1;
+}
+function render(t){const r=frame(t);composer.render();overlay(t,r);}
+window.renderAt=render;
+
+/* ───────── 配樂：全部用程式合成（離線算好再播放） ───────── */
+async function buildMusic(){
+  // 音符直接用數學算進各軌（快），最後只用少數幾個節點加濾波、殘響、壓縮
+  const SR=44100, N=SR*(DUR+4), rnd=rng(1966), B=.75, bar=n=>n*3, f=m=>440*2**((m-69)/12), TAU=PI*2;
+  const bus={}; for(const k of['BOX','BELL','PAD','STR','BASS','PLK','CHG','DRY','WHS','SWL','RUM'])bus[k]=new Float32Array(N);
+  const WAVE={sine:p=>Math.sin(TAU*p),triangle:p=>4*Math.abs(p-Math.floor(p)-.5)-1,saw:p=>2*(p-Math.floor(p))-1,square:p=>p-Math.floor(p)<.5?1:-1};
+  const perc=(pk,dec)=>{const k=9.21/dec;return u=>u<.004?pk*u/.004:pk*Math.exp(-k*(u-.004));};
+  const adsr=(d,pk,a,r)=>{d=Math.max(a,d);return u=>u<a?pk*u/a:u<d?pk:pk*Math.max(0,1-(u-d)/r);};
+  function tone(b,t,d,fr,wave,env,o={}){
+    const w=WAVE[wave],i0=Math.floor(t*SR),n=Math.min(Math.floor(d*SR),N-i0),buf=bus[b];let p=rnd();fr*=2**((o.det||0)/1200);
+    for(let i=0;i<n;i++){const u=i/SR;let q=fr;if(o.vib)q*=1+.0035*Math.sin(TAU*5.2*(t+u));if(o.slide)q*=o.slide(u);p+=q/SR;buf[i0+i]+=w(p)*env(u);}
+  }
+  function nz(b,t,d,env){const i0=Math.floor(t*SR),n=Math.min(Math.floor(d*SR),N-i0),buf=bus[b];for(let i=0;i<n;i++)buf[i0+i]+=(rnd()*2-1)*env(i/SR);}
+  const mbox=(t,m,v=1)=>{tone('BOX',t,1.8,f(m),'sine',perc(.2*v,1.7));tone('BOX',t,.4,f(m)*3,'sine',perc(.05*v,.35));tone('BOX',t,.9,f(m)*2,'triangle',perc(.04*v,.8));};
+  const bell=(t,m,v=1)=>[[1,1,3],[2.76,.45,1.7],[5.4,.22,.9],[8.9,.1,.5]].forEach(([k,g,d])=>f(m)*k<16000&&tone('BELL',t,d,f(m)*k,'sine',perc(.13*v*g,d)));
+  const pad=(t,ms,d,v=1)=>ms.forEach(m=>{const e=adsr(d,.03*v,.9,1.3);tone('PAD',t,d+1.3,f(m),'saw',e,{det:-7});tone('PAD',t,d+1.3,f(m),'saw',e,{det:7});});
+  const str=(t,m,d,v=1)=>{const e=adsr(d,.042*v,.13,.4);for(const det of[-9,0,9])tone('STR',t,d+.4,f(m),'saw',e,{det,vib:1});};
+  const bass=(t,m,d,v=1)=>{const e=adsr(d*.9,.2*v,.01,.12);tone('BASS',t,d+.15,f(m),'triangle',e);tone('BASS',t,d+.15,f(m+12),'sine',e);};
+  const pluck=(t,m,v=1)=>tone('PLK',t,.4,f(m),'triangle',perc(.06*v,.34));
+  const chug=(t,v)=>nz('CHG',t,.1,perc(.1*v,.07));
+  const kick=(t,v=1)=>tone('DRY',t,.32,110,'sine',perc(.34*v,.3),{slide:u=>Math.max(.38,Math.exp(-7.4*u))});
+  const whistle=(t,d,v=1)=>{const e=adsr(d,.05*v,.07,.3);for(const fr of[554.4,659.3,830.6])tone('WHS',t,d+.3,fr,'square',e,{slide:u=>u<.13?.965+.035*u/.13:1});nz('WHS',t,d+.3,adsr(d,.04*v,.05,.25));};
+  const swell=(t0,t1,v=1)=>{const T=t1-t0;nz('SWL',t0,T+2.6,u=>u<T?.12*v*Math.exp(-6.9*(1-u/T)):.12*v*Math.exp(-(u-T)*2.6));};
+  // 和弦與旋律（原創）
+  const CH={C:[36,[55,60,64],[60,64,67,72]],'G/B':[35,[55,59,62],[59,62,67,71]],Am:[33,[57,60,64],[57,60,64,69]],F:[41,[57,60,65],[53,57,60,65]],'C/E':[40,[55,60,64],[52,55,60,64]],Dm:[38,[57,62,65],[57,62,65,69]],G:[43,[55,59,62],[55,59,62,67]]};
+  const mA=[[0,76,1],[1,79,1],[2,84,1.5],[3.5,83,.5],[4,81,1],[5,79,1],[6,74,2],[8,72,1],[9,76,1],[10,81,1.5],[11.5,79,.5],[12,77,1],[13,76,1],[14,72,2],[16,69,1],[17,72,1],[18,77,1.5],[19.5,76,.5],[20,74,1],[21,76,1],[22,79,2]];
+  const PH={A:{c:['C','G/B','Am','F','F','C/E','Dm','G'],m:[...mA,[24,77,1],[25,76,1],[26,74,1],[27,72,1],[28,74,3]]},
+    E:{c:['C','G/B','Am','F','F','C/E','G','C'],m:[...mA,[24,74,1],[25,79,1],[26,77,1],[27,74,1],[28,72,4]]},
+    B:{c:['Am','F','C','G','Am','F','Dm','G'],m:[[0,81,2],[2,84,1],[3,83,1],[4,81,3],[7,77,1],[8,79,2],[10,76,1],[11,79,1],[12,74,3],[15,79,1],[16,81,2],[18,84,1],[19,86,1],[20,88,2],[22,84,2],[24,86,1],[25,84,1],[26,81,1],[27,77,1],[28,79,4]],hi:1},
+    R:{c:['C','Am','F','G'],m:[]},U:{c:['Am','F','Dm','G'],m:[[0,69,4],[4,72,4],[8,74,4],[12,79,4]],hi:1}};
+  function sec(b0,name,off,len,L,tr=0){const P=PH[name];
+    for(let b=0;b<len;b++){const[bs,pd,ar]=CH[P.c[off+b]],t=bar(b0+b);
+      if(L.pad)pad(t,pd.map(m=>m+tr),3.05,L.pad);
+      if(L.bass)for(const[q,d]of[[0,1.4],[2,1],[3.5,.5]])bass(t+q*B,bs+tr,d*B,L.bass);
+      if(L.arp)[0,1,2,3,2,1,2,1].forEach((ix,i)=>pluck(t+i*B/2,ar[ix]+12+tr,L.arp*(i%2?.65:1)));
+      if(L.chug)for(let i=0;i<16;i++)chug(t+i*B/4,L.chug*[1,.3,.55,.3][i%4]);
+      if(L.kick){kick(t,L.kick);kick(t+2*B,L.kick*.7);}}
+    for(const[q,m,d]of P.m){if(q<off*4||q>=(off+len)*4)continue;const t=bar(b0)+(q-off*4)*B;
+      if(L.box)mbox(t,m+tr,L.box);if(L.str)str(t,m+tr-(P.hi?0:12),d*B,L.str);}}
+  sec(4,'A',0,8,{box:1,pad:1});
+  sec(12,'B',0,8,{str:1,box:.5,pad:1,bass:.9,arp:.5});
+  sec(20,'A',0,6,{box:1,str:.45,pad:1,bass:1,arp:.8,chug:.7,kick:.8});
+  sec(26,'B',0,8,{str:1,box:.7,pad:1,bass:1,arp:.8,chug:.7,kick:.8});
+  sec(34,'A',0,4,{box:1,str:.6,pad:1,bass:1,arp:.9,chug:.75,kick:.85});
+  sec(38,'A',6,2,{box:1,pad:1,bass:1,arp:.8,chug:.5});
+  sec(40,'R',0,4,{pad:1.4,bass:.7});
+  sec(44,'U',0,4,{pad:1.3,bass:1,arp:1,str:1.1},2);
+  sec(48,'E',0,4,{box:1.1,str:1,pad:1.2,bass:1.1,arp:1,chug:.7,kick:1},2);
+  sec(52,'E',4,3,{box:1,str:.6,pad:1,bass:.8,arp:.6},2);
+  sec(55,'E',7,1,{box:1,pad:1,str:.4},2);
+  // 每位乘客一個音：上車時敲一下，片尾點名一路往上
+  const NOTE=[60,62,64,67,69,72,74,76,79,81,84,86,88,91,93];
+  LIT.forEach((iv,i)=>iv.forEach(([a])=>bell(a,NOTE[i],1)));
+  M.forEach((m,i)=>{bell(ROLL(i),NOTE[i],.8);mbox(ROLL(i),NOTE[i]+12,.5);});
+  // 開場：夜裡的鐵軌、遠方汽笛
+  pad(0,[48,55,60,64],11.5,1.2);
+  for(let i=0;i<9;i++)mbox(2+i*.85+rnd()*.3,[72,74,76,79,81,84][Math.floor(rnd()*6)],.45);
+  nz('RUM',0,13,u=>u<10.5?.4*Math.exp(-6*(1-u/10.5)):.4*Math.exp(-(u-10.5)*3.5));
+  for(let t=6;t<10.6;t+=.1875)chug(t,.25+(t-6)*.25);
+  whistle(1,1.5,.5);whistle(8.7,.4,.9);whistle(9.3,1.1,1);
+  whistle(31.5,.7,.6);whistle(54,.35,.7);whistle(54.6,1,.7);whistle(118.5,.8,.5);whistle(162.4,1.6,.35);
+  for(const T of TUNT){whistle(T-2.6,.5,.5);swell(T-1.5,T,.8);kick(T,.9);}   // 進隧道鳴笛、衝出來的那一下
+  [79,76,72,79,76,72,84].forEach((m,i)=>bell(42.3+i*.375,m,.7));          // 婚禮鐘聲
+  for(let i=0;i<24;i++)kick(141+i*.125,.25+i*.02);                        // 定音鼓滾奏
+  swell(135.4,138);kick(138,1.2);bell(138,86,1.2);bell(138,93,1);swell(141.4,144,1.3);kick(144,1.3);
+  FW.forEach(([t])=>{kick(t,.7);nz('CHG',t,.75,perc(.25,.7));});  // 煙火
+  [62,66,69,74,78,81,86].forEach((m,i)=>mbox(165+i*.2,m,.8));               // 最後的音樂盒
+  // 混音：濾波、殘響、限幅全部自己算（OfflineAudioContext 在這裡要多等 20 秒以上）
+  // ponytail: 合成會讓頁面停住幾秒；若嫌久，升級路徑是搬進 Web Worker
+  function biquad(buf,type,fc){ // RBJ 濾波器，fc 可以是隨時間變化的函式
+    let x1=0,x2=0,y1=0,y2=0,b0,b1,b2,a1,a2;
+    const set=fq=>{const w=TAU*fq/SR,c=Math.cos(w),al=Math.sin(w)/1.4,a0=1+al;
+      if(type=='lowpass'){b0=(1-c)/2/a0;b1=(1-c)/a0;b2=b0;}else if(type=='highpass'){b0=(1+c)/2/a0;b1=-(1+c)/a0;b2=b0;}else{b0=al/a0;b1=0;b2=-al/a0;}
+      a1=-2*c/a0;a2=(1-al)/a0;};
+    const dyn=typeof fc=='function';set(dyn?fc(0):fc);
+    for(let i=0;i<N;i++){if(dyn&&!(i&255))set(fc(i/SR));const x=buf[i],y=b0*x+b1*x1+b2*x2-a1*y1-a2*y2;x2=x1;x1=x;y2=y1;y1=y;buf[i]=y;}
+  }
+  biquad(bus.PAD,'lowpass',1100);biquad(bus.STR,'lowpass',2600);biquad(bus.CHG,'bandpass',2400);biquad(bus.WHS,'lowpass',1900);biquad(bus.SWL,'highpass',4500);
+  biquad(bus.RUM,'lowpass',t=>t<10.5?120*Math.pow(15,t/10.5):Math.max(150,1800*Math.pow(1/12,(t-10.5)/2)));
+  const WET={BOX:.5,BELL:.7,PAD:.5,STR:.55,BASS:.05,PLK:.35,CHG:.1,DRY:.1,WHS:.8,SWL:.7,RUM:.1}, dry=new Float32Array(N), send=new Float32Array(N);
+  for(const k in bus){const b=bus[k],w=WET[k];for(let i=0;i<N;i++){dry[i]+=b[i];send[i]+=b[i]*w;}}
+  function reverb(sp){const o=new Float32Array(N);
+    for(const d0 of[1557,1617,1491,1422,1277,1356]){const d=d0+sp,b=new Float32Array(d);let k=0,st=0;for(let i=0;i<N;i++){const y=b[k];st=y*.8+st*.2;b[k]=send[i]+st*.86;o[i]+=y;if(++k==d)k=0;}}
+    for(const d0 of[225,556,441,341]){const d=d0+sp,b=new Float32Array(d);let k=0;for(let i=0;i<N;i++){const y=b[k],x=o[i];b[k]=x+y*.5;o[i]=y-x;if(++k==d)k=0;}}
+    return o;}
+  const rms=a=>{let q=0;for(let i=0;i<N;i+=7)q+=a[i]*a[i];return Math.sqrt(q/(N/7));};
+  const out=new AudioBuffer({length:N,numberOfChannels:2,sampleRate:SR}), wets=[reverb(0),reverb(23)], wg=.34*rms(dry)/rms(wets[0]);
+  let pk=0; for(let i=0;i<N;i++)pk=Math.max(pk,Math.abs(dry[i]+wets[0][i]*wg));
+  wets.forEach((w,c)=>{const g=1.25/pk;for(let i=0;i<N;i++){const t=i/SR;w[i]=Math.tanh((dry[i]+w[i]*wg)*g)*.9*(t<164.5?1:Math.max(0,1-(t-164.5)/5.5));}out.copyToChannel(w,c);});
+  return out;
+}
+
+/* ───────── 播放器 ───────── */
+const $=id=>document.getElementById(id), gate=$('gate'), go=$('go'), bar=$('bar'), seekEl=$('seek'), timeEl=$('time'), pp=$('pp'), recBtn=$('rec');
+let music, actx, src, playing=false, t0=0, c0=0, rec=null, recDest=null;
+const fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+const now=()=>playing?cl(t0+actx.currentTime-c0,0,DUR):t0;
+function play(){
+  if(!music)return; actx??=new AudioContext(); actx.resume();
+  if(t0>=DUR)t0=0;
+  src=actx.createBufferSource();src.buffer=music;src.connect(actx.destination);if(recDest)src.connect(recDest);
+  src.start(0,t0);c0=actx.currentTime;playing=true;pp.textContent='⏸';gate.hidden=true;bar.hidden=false;
+}
+function pause(){if(!playing)return;t0=now();src.stop();playing=false;pp.textContent='▶';}
+function seek(t){const p=playing;pause();t0=cl(t,0,DUR);if(p)play();else render(t0);}
+function loop(){
+  const t=now();
+  if(playing||loop.last!==t){render(t);loop.last=t;seekEl.value=t;timeEl.textContent=fmt(t)+' / '+fmt(DUR);}
+  if(playing&&t>=DUR){pause();if(rec&&rec.state=='recording')rec.stop();}
+  requestAnimationFrame(loop);
+}
+function record(){
+  if(rec&&rec.state=='recording'){rec.stop();return;}
+  actx??=new AudioContext();pause();recDest=actx.createMediaStreamDestination();
+  const stream=out.captureStream(30);stream.addTrack(recDest.stream.getAudioTracks()[0]);
+  const mime=['video/mp4;codecs=avc1.640028,mp4a.40.2','video/webm;codecs=vp9,opus','video/webm'].find(m=>MediaRecorder.isTypeSupported(m)),chunks=[];
+  rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:14e6});
+  rec.ondataavailable=e=>chunks.push(e.data);
+  rec.onstop=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(chunks,{type:mime}));a.download='鑽石婚號.'+(mime.includes('mp4')?'mp4':'webm');a.click();recBtn.textContent='⏺ 錄成影片檔';recDest=null;};
+  rec.onerror=e=>{alert('錄影失敗：'+(e.error?.message||e.type));recBtn.textContent='⏺ 錄成影片檔';};
+  rec.start(1000);recBtn.textContent='⏹ 錄影中（播完自動存檔）';t0=0;play();
+}
+go.onclick=play; pp.onclick=()=>playing?pause():play(); recBtn.onclick=record;
+seekEl.oninput=()=>seek(+seekEl.value);
+$('fs').onclick=()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();
+addEventListener('keydown',e=>{if(e.target.tagName=='INPUT')return;
+  if(e.code=='Space'){e.preventDefault();playing?pause():play();}
+  if(e.key=='f'||e.key=='F')$('fs').click();
+  if(e.key=='ArrowRight')seek(now()+5); if(e.key=='ArrowLeft')seek(now()-5);});
+let idle;addEventListener('pointermove',()=>{bar.classList.remove('idle');clearTimeout(idle);idle=setTimeout(()=>playing&&bar.classList.add('idle'),2500);});
+const h=+(location.hash.match(/t=([\d.]+)/)||[])[1]; if(h)t0=cl(h,0,DUR);
+render(t0); requestAnimationFrame(loop);
+setTimeout(()=>buildMusic().then(b=>{music=window.music=b;go.disabled=false;go.textContent='▶ 播放';})
+  .catch(e=>{go.textContent='配樂合成失敗：'+e.message;console.error(e);}),50);
+</script>
+</body>
+</html>
