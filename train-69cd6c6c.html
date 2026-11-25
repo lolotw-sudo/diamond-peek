@@ -357,7 +357,7 @@ const PEOPLE={
   loloBaby:{stage:'baby',wrap:'#E3EEC2'}
 };
 // ── 依年份自動算年紀、換造型（1995 以後的站都用這個）：代號＠年份，例如 'dad@2010'、'lolo@2001!bride'
-const BORN={dad:1939,mom:1945,yt:1968,wl:1970,lolo:1975,py:1995,pd:1998,jk:2002,jd:2004,zc:2008,zj:2010},MATE={hy:'yt',mz:'lolo',sj:'wl',pdw:'pd'}; // 配偶生年不明，先當作同年
+const BORN={dad:1939,mom:1945,yt:1968,wl:1970,lolo:1975,py:1995,pd:1998,jk:2003,jd:2005,zc:2008,zj:2010},MATE={hy:'yt',mz:'lolo',sj:'wl',pdw:'pd'}; // 配偶生年不明，先當作同年
 const HOUSE={dad:'dad',mom:'mom',yt:'yt',hy:'yt',py:'yt',pd:'yt',pdw:'yt',wl:'wl',sj:'wl',zc:'wl',zj:'wl',lolo:'lolo',mz:'lolo',jk:'lolo',jd:'lolo'};
 const WRAP={yt:'#E3D0EE',wl:'#CFE8F2',lolo:'#E3EEC2'},TIE={yt:'#A97FC4',wl:'#2F93B8',lolo:'#8DB33A'};
 const TOP={dad:'#3E5F96',mom:'#8E2A3A',yt:'#A97FC4',hy:'#7E5E9E',py:'#CDB0E0',pd:'#9A74BC',pdw:'#E3C8EE',wl:'#2F93B8',sj:'#7CC6DD',zc:'#1F6F8F',zj:'#9ED8EA',lolo:'#8DB33A',mz:'#6A8F2A',jk:'#C3DB6E',jd:'#A2C24E'};
@@ -423,13 +423,13 @@ const STEPS=[
   // 1998 → 2025：人多了，大家站到列車前方的長月台，從自己的窗下車、回自己的窗上車
   {key:'1998',st:{name:'1998',roman:'培典上車',prev:'← 1995',next:'2001 →'},train:'one',alight:1,on:[],plat:G2(1998,['dad','mom','wl','lolo'],['yt','py',['pd'],'hy']),year:'1998 · 新乘客',title:'第二個孫子：陳培典。',sub:'培元 3 歲，當上了哥哥。'},
   {key:'1998',board:1,on:R(8),tag:{seat:8,name:'培典'},title:'典典上車了。',sub:'車上 8 個人了。'},
-  {key:'2001',st:{name:'2001',roman:'名璋上車',prev:'← 1998',next:'2002 →'},train:'one',alight:1,on:[],plat:G2(2001,['dad','mom','wl','yt','hy','py','pd'],[['lolo!bride'],['mz!groom']]),year:'2001 · 新家人',title:'迎接第二位新成員：陳名璋。',sub:''},
+  {key:'2001',st:{name:'2001',roman:'名璋上車',prev:'← 1998',next:'2003 →'},train:'one',alight:1,on:[],plat:G2(2001,['dad','mom','wl','yt','hy','py','pd'],[['lolo!bride'],['mz!groom']]),year:'2001 · 新家人',title:'迎接第二位新成員：陳名璋。',sub:''},
   {key:'2001',board:1,on:R(9),tag:{seat:9,name:'名璋'},title:'名璋上車了。',sub:'車上 9 個人了。'},
-  {key:'2002',st:{name:'2002',roman:'敬凱上車',prev:'← 2001',next:'2004 →'},train:'one',alight:1,on:[],plat:G2(2002,['dad','mom','wl','yt','hy','py','pd'],['lolo',['jk'],'mz']),year:'2002 · 新乘客',title:'第三個孫子：陳敬凱。',sub:'LOLO 和名璋的第一個孩子。'},
-  {key:'2002',board:1,on:R(10),tag:{seat:10,name:'敬凱'},title:'凱凱上車了。',sub:'車上 10 個人了。'},
-  {key:'2004',st:{name:'2004',roman:'敬達上車',prev:'← 2002',next:'2008 →'},train:'one',alight:1,on:[],plat:G2(2004,['dad','mom','wl','yt','hy','py','pd'],['lolo','jk',['jd'],'mz']),year:'2004 · 新乘客',title:'第四個孫子：陳敬達。',sub:'凱凱 2 歲，當上了哥哥。'},
-  {key:'2004',board:1,on:R(11),tag:{seat:11,name:'敬達'},title:'達達上車了。',sub:'車上 11 個人了。'},
-  {key:'2008',st:{name:'2008',roman:'淑娟、兆宸上車',prev:'← 2004',next:'2010 →'},train:'one',alight:1,on:[],plat:G2(2008,['dad','mom','yt','hy','py','pd','lolo','mz','jk','jd'],[['wl!groom'],['sj!bride']]),wave:['wl','sj'],year:'2008 · 新家人',title:'偉立和淑娟結婚了。',sub:'新郎新娘一起向大家揮手。'},
+  {key:'2003',st:{name:'2003',roman:'敬凱上車',prev:'← 2001',next:'2005 →'},train:'one',alight:1,on:[],plat:G2(2003,['dad','mom','wl','yt','hy','py','pd'],['lolo',['jk'],'mz']),year:'2003 · 新乘客',title:'第三個孫子：陳敬凱。',sub:'LOLO 和名璋的第一個孩子。'},
+  {key:'2003',board:1,on:R(10),tag:{seat:10,name:'敬凱'},title:'凱凱上車了。',sub:'車上 10 個人了。'},
+  {key:'2005',st:{name:'2005',roman:'敬達上車',prev:'← 2003',next:'2008 →'},train:'one',alight:1,on:[],plat:G2(2005,['dad','mom','wl','yt','hy','py','pd'],['lolo','jk',['jd'],'mz']),year:'2005 · 新乘客',title:'第四個孫子：陳敬達。',sub:'凱凱 2 歲，當上了哥哥。'},
+  {key:'2005',board:1,on:R(11),tag:{seat:11,name:'敬達'},title:'達達上車了。',sub:'車上 11 個人了。'},
+  {key:'2008',st:{name:'2008',roman:'淑娟、兆宸上車',prev:'← 2005',next:'2010 →'},train:'one',alight:1,on:[],plat:G2(2008,['dad','mom','yt','hy','py','pd','lolo','mz','jk','jd'],[['wl!groom'],['sj!bride']]),wave:['wl','sj'],year:'2008 · 新家人',title:'偉立和淑娟結婚了。',sub:'新郎新娘一起向大家揮手。'},
   {key:'2008',swap:1,plat:G2(2008,['dad','mom','yt','hy','py','pd','lolo','mz','jk','jd'],['wl',['zc'],'sj']),title:'一同迎接第五個孫子：李兆宸。',sub:'終於等來個姓李的孫子了～'}, // 點一下：換裝＋寶寶出現
   {key:'2008',board:1,on:R(13),tag:[{seat:12,name:'淑娟'},{seat:13,name:'兆宸'}],title:'淑娟和兆宸上車了。',sub:'車上 13 個人了。'},
   {key:'2010',st:{name:'2010',roman:'兆鈞上車',prev:'← 2008',next:'2025 →'},train:'one',alight:1,on:[],plat:G2(2010,['dad','mom','yt','hy','py','pd','lolo','mz','jk','jd'],['wl','zc',['zj'],'sj']),year:'2010 · 新乘客',title:'第六個孫子李兆鈞。',sub:'兆宸 2 歲，當上了哥哥。'},

@@ -27,7 +27,8 @@ window.TODO = [
     ['airbnb', '**11/25 16:00 前**：取消 Airbnb 漫·慢生活'],
     ['chensveg-book', '**11/26**：用 LINE 客服訂澄石新天畝（只開放一個月內訂位）'],
     ['kurumba', '**12/10 前**：取消可倫巴 Booking'],
-    ['agoda', '德川是在 **Agoda** 訂的，三間四人房＋兩間雙人房共 16 人（免費取消到 12/17 23:59，這間不要取消）：用 LOLO 訂房的帳號登入 → 我的預訂', 'https://www.agoda.com/zh-tw/account/bookings.html'],
+    ['agoda', '德川是在 **Agoda** 訂的，三間四人房＋兩間雙人房共 16 人（Agoda 免費取消到 12/17 23:59、12/16 自動扣款共 NT$11,961；這間不要取消）：用 LOLO 訂房的帳號登入 → 我的預訂', 'https://www.agoda.com/zh-tw/account/bookings.html'],
+    ['lishan-extra', '追加德川里山村訂房：12/25 目前已客滿，每天 9:00、14:00、22:00 自動追蹤空房，有房會推播＋寄信給 LOLO', 'https://www.agoda.com/zh-tw/h36108460/hotel/nantou-tw.html?checkIn=2026-12-25&los=1&adults=2&rooms=1&children=0'],
     ['lodging', '**12/16**：最後確認其他住宿都取消，只留德川'],
   ] },
   { t: '行程與場地', a: [
