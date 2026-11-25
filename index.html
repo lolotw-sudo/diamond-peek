@@ -104,7 +104,20 @@ button{font:inherit}
 
 /* ── 月台留言 ── */
 .platform{padding-block:44px 0;display:grid;gap:12px}
-.platform h2{font-size:26px}
+.platform h2,.photos h2{font-size:26px}
+.photos{padding-top:44px;display:grid;gap:12px}
+.photos input[type=file]{color:var(--ink);font:inherit}
+.wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;list-style:none;padding:0;margin:0}
+.wall button{display:block;width:100%;aspect-ratio:1;padding:0;border:0;border-radius:4px;overflow:hidden;background:var(--night2);cursor:zoom-in;position:relative}
+.wall img{width:100%;height:100%;object-fit:cover;display:block}
+.wall span{position:absolute;left:0;right:0;bottom:0;font-size:12px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.65));padding:10px 6px 4px;text-align:left}
+.wall button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.more{justify-self:center;background:transparent;color:var(--gold);border:1px solid var(--gold);border-radius:4px;padding:6px 16px;font:inherit;cursor:pointer}
+#phBig{border:0;padding:0;background:transparent;max-width:96vw;max-height:94vh}
+#phBig::backdrop{background:rgba(5,8,16,.92)}
+#phBig img{display:block;max-width:96vw;max-height:84vh;margin:auto;border-radius:4px}
+#phBig p{color:var(--ink);text-align:center;margin:8px 0 0;display:flex;gap:16px;justify-content:center;align-items:center}
+#phBig button{background:var(--gold);color:var(--night);border:0;border-radius:4px;font:inherit;font-weight:700;padding:6px 14px;cursor:pointer}
 .strip{overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;background-attachment:local;background-color:#0B1733;
   /* 由上到下：月台地面｜遠山｜星星｜夜空到地平線的晚霞（跟開場同一片天） */
   background-image:linear-gradient(to bottom,transparent calc(100% - 46px),#E7DFCC calc(100% - 46px),#E7DFCC calc(100% - 36px),#8A7457 calc(100% - 36px)),
@@ -346,6 +359,22 @@ footer{text-align:center;font-size:13px;padding-block:40px}
     <textarea id="text" maxlength="300" placeholder="例如：好期待回車埕！阿公記得穿暖一點。" required></textarea>
     <div class="sendrow"><span class="status" id="status" role="status"></span><button class="send" id="send" type="submit">說出來</button></div>
   </form>
+  <section class="photos" aria-labelledby="phTitle">
+    <h2 id="phTitle">旅途相簿</h2>
+    <p>這兩天拍的照片，全部丟進來！LOLO 會把大家的照片剪成一支<b>鑽石婚號旅行紀念影片</b>。</p>
+    <form class="compose" id="phForm">
+      <label for="phWho">我是</label>
+      <select id="phWho" required><option value="">請選擇你是誰</option></select>
+      <label for="phFiles">選照片（可以一次選很多張）</label>
+      <input type="file" id="phFiles" accept="image/*" multiple required>
+      <div class="sendrow"><span class="status" id="phStatus" role="status"></span><button class="send" id="phSend" type="submit">上傳</button></div>
+    </form>
+    <p class="muted" id="phCount"></p>
+    <ul class="wall" id="wall" aria-label="大家上傳的照片"></ul>
+    <button class="more" id="phMore" type="button" hidden>看更多照片</button>
+    <dialog id="phBig" aria-label="放大的照片"><img id="phBigImg" alt=""><p><span id="phBigCap"></span><button type="button" id="phPrev" aria-label="上一張">‹</button><button type="button" id="phNext" aria-label="下一張">›</button><button type="button" id="phClose">關閉</button></p></dialog>
+    <p id="phAlbum" hidden>有拍<b>影片</b>、或想保留原始畫質？<a id="phAlbumLink" target="_blank" rel="noopener">丟進 Google 共用相簿 →</a><small class="muted">（需要登入 Google 帳號）</small></p>
+  </section>
   <footer class="muted">鑽石婚號 · 下一站 2026.12.25 車埕</footer>
 </div>
 
@@ -641,6 +670,62 @@ if(!calm&&'IntersectionObserver' in window){
   const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){io.disconnect();arrive()}},{rootMargin:'0px 0px 120px 0px'}); // 還沒捲到就先開始，避免先看到人偶又消失
   io.observe($('strip'));
 }
+
+// ── 旅途相簿：照片上傳到 LOLO 的雲端硬碟（photo-script.gs，跟留言板分開）──
+const PHOTO_API='https://script.google.com/macros/s/AKfycbw86nErER7QKaSg9i74YbdWfJ-ICio9ZcseH6nUxjf9VcDHQXKzrsPYb1oHAKRDc7NrbA/exec'; // 部署 photo-script.gs 後把 …/exec 網址貼這裡；空字串＝上傳功能還沒開
+const ALBUM='';     // Google 共用相簿的分享連結；空字串＝不顯示
+const phWho=$('phWho'),phStatus=$('phStatus'),phSay=(t,err)=>{phStatus.textContent=t;phStatus.classList.toggle('err',!!err)};
+for(const [,name] of CAST)phWho.add(new Option(name,name));
+phWho.value=store.get('me','');
+if(ALBUM){$('phAlbumLink').href=ALBUM;$('phAlbum').hidden=false}
+// 照片牆：縮圖走 Google 雲端硬碟的公開縮圖網址；一次先放 60 張，按「看更多」再加
+let PHOTOS=[],phShown=60,phAt=0;
+const thumb=(id,w)=>`https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w${w}`;
+const phWhen=t=>t.replace(/^\d{4}(\d\d)(\d\d)-(\d\d)(\d\d).*/,(_,m,d,h,mi)=>`${+m}/${+d} ${h}:${mi}`);
+function phShow(j){
+  const n=Object.values(j.counts||{}).reduce((a,b)=>a+b,0);$('phCount').textContent=n?`目前收到 ${n} 張照片，謝謝大家！點照片可以放大。`:'';
+  PHOTOS=j.photos||[];
+  $('wall').replaceChildren(...PHOTOS.slice(0,phShown).map((p,i)=>{const li=document.createElement('li'),b=document.createElement('button'),img=document.createElement('img'),s=document.createElement('span');
+    b.type='button';b.setAttribute('aria-label',`${p.name} 傳的照片，放大`);img.src=thumb(p.id,400);img.alt='';img.loading='lazy';s.textContent=p.name;
+    b.onclick=()=>phOpen(i);b.append(img,s);li.append(b);return li}));
+  $('phMore').hidden=PHOTOS.length<=phShown;
+}
+function phOpen(i){
+  phAt=(i+PHOTOS.length)%PHOTOS.length;const p=PHOTOS[phAt];
+  $('phBigImg').src=thumb(p.id,1600);$('phBigImg').alt=`${p.name} 傳的照片`;$('phBigCap').textContent=`${p.name} · ${phWhen(p.t)}`;
+  if(!$('phBig').open)$('phBig').showModal();
+}
+$('phMore').onclick=()=>{phShown+=60;phShow({counts:null,photos:PHOTOS});$('phCount').textContent=`目前收到 ${PHOTOS.length} 張照片，謝謝大家！點照片可以放大。`};
+$('phPrev').onclick=()=>phOpen(phAt-1);$('phNext').onclick=()=>phOpen(phAt+1);$('phClose').onclick=()=>$('phBig').close();
+$('phBig').addEventListener('click',e=>{if(e.target===$('phBig'))$('phBig').close()}); // 點黑色背景也能關
+$('phBig').addEventListener('keydown',e=>{if(e.key==='ArrowLeft')phOpen(phAt-1);if(e.key==='ArrowRight')phOpen(phAt+1)});
+if(PHOTO_API)fetch(PHOTO_API).then(r=>r.json()).then(j=>j.ok&&phShow(j)).catch(()=>{});
+// 12MB 以下的 JPG 原檔直傳（保留拍攝時間，剪影片排順序要用）；其他格式或太大的，先縮到長邊 3000px 再傳
+async function phData(f){
+  let blob=f;
+  if(!(f.type==='image/jpeg'&&f.size<=12e6)){
+    const img=await createImageBitmap(f),s=Math.min(1,3000/Math.max(img.width,img.height)),c=document.createElement('canvas');
+    c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    blob=await new Promise(ok=>c.toBlob(ok,'image/jpeg',.9));
+  }
+  const u=await new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=no;r.readAsDataURL(blob)});
+  return u.slice(u.indexOf(',')+1);
+}
+$('phForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const name=phWho.value,files=[...$('phFiles').files];
+  if(!name)return phSay('請先選你是誰',1);
+  if(!files.length)return phSay('請先選照片',1);
+  if(!PHOTO_API)return phSay('上傳功能還在準備中，出發前就會開放！',1);
+  store.set('me',name);$('phSend').disabled=true;let ok=0,bad=0;
+  for(const [i,f] of files.entries()){
+    phSay(`上傳中 ${i+1} / ${files.length}…（請先不要關掉頁面）`);
+    try{const j=await(await fetch(PHOTO_API,{method:'POST',body:JSON.stringify({name,file:f.name,data:await phData(f)})})).json();
+      if(!j.ok)throw 0;ok++;phShow(j)}catch{bad++}
+  }
+  $('phSend').disabled=false;$('phFiles').value='';
+  phSay(bad?`傳好 ${ok} 張，有 ${bad} 張失敗，請再選一次失敗的那幾張`:`${ok>1?ok+" 張都":"照片"}傳好了，謝謝 ${name}！`,bad>0);
+});
 
 // 列車進站（進到畫面時才開進來）
 requestAnimationFrame(()=>requestAnimationFrame(()=>$('train').classList.add('in')));
