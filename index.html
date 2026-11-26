@@ -16,6 +16,8 @@
 }
 *{box-sizing:border-box}
 [hidden],[data-off]{display:none!important} /* 不然 .crew 的 display:grid 會蓋掉 hidden，阿公阿嬤就看到問卷段 */
+html,body{overflow-x:hidden;max-width:100%} /* iPhone Safari：有東西超出就會把整頁撐寬，右邊被切掉 */
+input,select,textarea{max-width:100%}
 body{background:var(--night);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.75;margin:0}
 h1,h2,h3{font-family:var(--serif);font-weight:900;text-wrap:balance;margin:0;line-height:1.3}
 p{margin:0}
