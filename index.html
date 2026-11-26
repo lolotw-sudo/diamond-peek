@@ -50,7 +50,7 @@ button{font:inherit}
 /* ── 時刻表 ── */
 .timetable{padding-block:36px 8px;display:grid;gap:14px}
 .timetable h2{font-size:26px}
-.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:14px}
 .day{background:#05070D;border:1px solid var(--line);border-radius:6px;overflow:hidden}
 .day h3{font-family:var(--sans);font-size:16px;background:var(--blue);color:var(--paper);padding:8px 14px;display:flex;justify-content:space-between}
 .day h3 span{font-family:var(--cond);letter-spacing:.06em}
@@ -108,7 +108,8 @@ button{font:inherit}
 .platform{padding-block:44px 0;display:grid;gap:12px}
 .platform h2,.photos h2{font-size:26px}
 .photos{padding-top:44px;display:grid;gap:12px}
-.photos input[type=file]{color:var(--ink);font:inherit}
+.photos,.compose{grid-template-columns:minmax(0,1fr)} /* 格線預設不肯比內容窄，窄手機會被撐寬 */
+.photos input[type=file]{color:var(--ink);font:inherit;width:100%;min-width:0}
 .wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;list-style:none;padding:0;margin:0}
 .wall button{display:block;width:100%;aspect-ratio:1;padding:0;border:0;border-radius:4px;overflow:hidden;background:var(--night2);cursor:zoom-in;position:relative}
 .wall img{width:100%;height:100%;object-fit:cover;display:block}
