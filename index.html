@@ -15,7 +15,7 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box}
-[hidden]{display:none!important} /* 不然 .crew 的 display:grid 會蓋掉 hidden，阿公阿嬤就看到問卷段 */
+[hidden],[data-off]{display:none!important} /* 不然 .crew 的 display:grid 會蓋掉 hidden，阿公阿嬤就看到問卷段 */
 body{background:var(--night);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.75;margin:0}
 h1,h2,h3{font-family:var(--serif);font-weight:900;text-wrap:balance;margin:0;line-height:1.3}
 p{margin:0}
@@ -159,11 +159,28 @@ button{font:inherit}
 footer{text-align:center;font-size:13px;padding-block:40px}
 @media (prefers-reduced-motion:reduce){#train,#train.in{transform:none;transition:none}.who-btn svg{transition:none}}
 .hint b{color:var(--gold)}
+
+/* ── 底部選單＋首頁依日期換的區塊 ── */
+body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;display:grid;grid-template-columns:repeat(4,1fr);background:#05070D;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.tabs a{display:grid;place-items:center;min-height:56px;color:var(--muted);text-decoration:none;font-size:16px;font-weight:700}
+.tabs a[aria-current=page]{color:var(--gold)}
+.now{margin-top:28px;background:var(--blue);border-radius:6px;padding:16px 18px;display:grid;gap:4px}
+.now h2{font-size:28px;color:var(--gold)}
+.gifts{padding-top:36px;display:grid;gap:12px}
+.gifts h2{font-size:26px}
+.gifts .soon{background:var(--night2);color:var(--muted);padding:10px 14px;border-radius:4px}
+.day li.here{background:#1D3F7A55}
+.day li.here time::after{content:" ◀ 現在";font-size:13px;color:var(--gold)}
+.reel{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;list-style:none;margin:0;padding:0}
+.reel li{flex:none;width:44%;max-width:220px;scroll-snap-align:start}
+.seeall{color:var(--gold);font-weight:700}
+.clap{display:block;margin:0 auto 10px;background:none;border:0;font-size:30px;cursor:pointer;line-height:1;opacity:.55;-webkit-tap-highlight-color:transparent}
 </style>
 </head>
 <body>
 
-<header class="hero">
+<header class="hero" data-v="home">
   <svg viewBox="0 172 800 404" role="img" aria-label="夜晚的車埕車站舊址月台，一列藍色火車正駛進站，站牌寫著 2026.12.25 到 26">
     <defs>
       <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0B1733"/><stop offset=".62" stop-color="#2B3D68"/><stop offset="1" stop-color="#6E5C80"/></linearGradient>
@@ -228,8 +245,8 @@ footer{text-align:center;font-size:13px;padding-block:40px}
     <g>
       <rect x="124" y="448" width="5" height="44" fill="#3A3A3A"/><rect x="235" y="448" width="5" height="44" fill="#3A3A3A"/>
       <rect x="74" y="372" width="216" height="80" fill="#FFFFFF" stroke="#23211D" stroke-width="2.5"/>
-      <text x="182" y="408" text-anchor="middle" font-family="Oswald,'Arial Narrow',sans-serif" font-size="30" font-weight="600" fill="#23211D">2026.12.25–26</text>
-      <text x="182" y="430" text-anchor="middle" font-family="'Noto Sans TC','PingFang TC',sans-serif" font-size="16" font-weight="900" fill="#23211D">車埕車站舊址</text>
+      <text x="182" y="408" text-anchor="middle" font-family="Oswald,'Arial Narrow',sans-serif" font-size="30" font-weight="600" fill="#23211D" id="signBig">2026.12.25–26</text>
+      <text x="182" y="430" text-anchor="middle" font-family="'Noto Sans TC','PingFang TC',sans-serif" font-size="16" font-weight="900" fill="#23211D" id="signSub">車埕車站舊址</text>
       <text x="86" y="446" font-family="'Noto Sans TC','PingFang TC',sans-serif" font-size="10" fill="#23211D">← 1966</text>
       <text x="278" y="446" text-anchor="end" font-family="'Noto Sans TC','PingFang TC',sans-serif" font-size="10" fill="#23211D">鑽石婚號</text>
     </g>
@@ -248,7 +265,7 @@ footer{text-align:center;font-size:13px;padding-block:40px}
     </g>
   </svg>
   <div class="count" aria-live="off">
-    <span class="eyebrow">距離發車還有</span>
+    <span class="eyebrow" id="cdLabel">距離發車還有</span>
     <div class="clock" id="clock" role="timer" aria-label="距離 2026 年 12 月 25 日早上 8 點 30 分發車的倒數">
       <span class="u"><span class="n" id="cd">---</span><span class="l">天</span></span><span class="sep">:</span>
       <span class="u"><span class="n" id="ch">--</span><span class="l">時</span></span><span class="sep">:</span>
@@ -261,14 +278,26 @@ footer{text-align:center;font-size:13px;padding-block:40px}
 
 <main class="wrap">
 
-<section class="invite">
+<section class="invite" data-v="home">
   <p class="eyebrow">鑽石婚號 · 1966 → 2026</p>
   <h1>阿公阿嬤結婚 <em>60 年</em>，<br>全家一起回到車埕。</h1>
   <p>1966 年，阿公阿嬤在車埕結婚，一起坐上同一班車。60 年後，這班車上已經坐滿 15 個人。
     2026 年 12 月 25、26 日，我們全家回到這裡，陪阿公阿嬤再進站一次。</p>
 </section>
 
-<section class="timetable" aria-labelledby="ttTitle">
+<section class="gifts" id="giftSec" data-v="home" data-off aria-labelledby="giftTitle">
+  <h2 id="giftTitle">今晚 17:30 解鎖</h2>
+  <p id="giftLock">給阿公阿嬤的禮物，晚餐前一起打開。</p>
+  <ul class="links" id="giftLinks" hidden>
+    <li><a href="film.html">▶ 3D 影片：給爸媽的禮物<span>→</span></a></li>
+    <li><a href="train-69cd6c6c.html">人生列車遊戲<span>→</span></a></li>
+    <li class="soon" data-mem>背心稱號（之後放上來）</li>
+    <li class="soon" data-mem>▶ 活動紀念影片（LOLO 剪好就放上來）</li>
+    <li data-mem><a href="#photos">全部的照片<span>→</span></a></li>
+  </ul>
+</section>
+
+<section class="timetable" data-v="home tt" aria-labelledby="ttTitle">
   <h2 id="ttTitle">列車時刻表</h2>
   <div class="days">
     <div class="day">
@@ -297,9 +326,20 @@ footer{text-align:center;font-size:13px;padding-block:40px}
   <p class="tt-note">本次採包車旅行，由 LOLO 導遊為大家服務。請大家帶著簡易行李、豐富零食、海量酒精以及一顆期待的心情，出去玩囉！</p>
 </section>
 
-<section class="crew" id="crewSec" aria-labelledby="crewTitle" hidden>
-  <span class="stamp">家人限定 · 阿公阿嬤看不到這段</span>
-  <h2 id="crewTitle">出發前待辦</h2>
+<section class="photos" id="reelSec" data-v="home" data-off aria-labelledby="reelTitle">
+  <h2 id="reelTitle">最新照片</h2>
+  <ul class="reel wall" id="reel" aria-label="最新上傳的照片"></ul>
+  <a class="seeall" href="#photos">看全部、上傳照片 →</a>
+</section>
+
+<section class="crew" id="crewSec" data-v="crew" aria-labelledby="crewTitle">
+  <span class="stamp">總召限定 · 不在選單裡</span>
+  <h2 id="crewTitle">總召車廂</h2>
+  <ul class="links">
+    <li><a href="train-69cd6c6c.html">人生列車遊戲（含答案）<span>→</span></a></li>
+    <li><a href="film.html">3D 影片：給爸媽的禮物<span>→</span></a></li>
+  </ul>
+  <h2>出發前待辦</h2>
   <div class="todo" id="todo"><p class="muted">載入中…</p></div>
   <div class="todoBox">
     <h3>有意見請留言</h3>
@@ -313,53 +353,29 @@ footer{text-align:center;font-size:13px;padding-block:40px}
     </form>
     <p id="todoMsg" role="status"></p>
   </div>
-  <details class="survey">
-  <summary><h2>秘密問卷是做什麼用的？</h2></summary>
-  <div class="surveyBody">
-  <p>你填的那份問卷，會變成鑽石婚宴上「人生列車」遊戲的<b>乘客來信</b>。當天由 LOLO 操作，你們的任務就是提供情緒價值。</p>
-  <ol class="steps">
-    <li><b>紅票出現</b>螢幕上跳出一張乘客來信，上面是某位家人寫的答案，寄件人被票根遮住。</li>
-    <li><b>阿公阿嬤先猜</b>這是誰寫的？孫子給阿公打幾分？先讓他們回答。</li>
-    <li><b>撕開票根</b>揭曉答案，寫的人那一扇車窗會亮起來。</li>
-  </ol>
-  <h2>先偷看三題</h2>
-  <p class="peek-lead">以下是大家的答案，<b>誰寫的先不說</b>，當天由阿公阿嬤來猜。其他題目的答案，保密到當天。</p>
-  <div class="peek" id="peek"><p class="muted">載入中…</p></div>
-  <p class="who">寄件人：？？？　當天撕開票根揭曉</p>
-  <p>沒看到你的答案嗎？你是不是還沒填問卷？趕快去下方領取自己的問卷啊！</p>
-  <ul class="links">
-    <li><a href="https://forms.gle/1SAt6eFcnHRUVtXG7" target="_blank" rel="noopener">三兄妹版<span>→</span></a></li>
-    <li><a href="https://forms.gle/9NRyxTrfQfF8UP8N9" target="_blank" rel="noopener">家庭新乘客版（三兄妹的另一半）<span>→</span></a></li>
-    <li><a href="https://forms.gle/ZeLSwgSwRWT3JgtbA" target="_blank" rel="noopener">孫子輩版<span>→</span></a></li>
-  </ul>
-  <ol class="rules">
-    <li>大約 10～15 分鐘，沒有標 * 的題目可以跳過；越好笑、越真實越好。</li>
-    <li>問卷和答案都<b>不能讓阿公阿嬤知道</b>，各填各的，不用互相討論。</li>
-    <li>下面的月台留言，<b>阿公阿嬤也看得到</b>，問卷答案別寫在那裡喔。</li>
-  </ol>
-  </div>
-  </details>
-  <p class="note">這一段只出現在網址結尾有 <code>#crew</code> 的版本。轉給阿公阿嬤時，請用沒有 #crew 的網址。</p>
+  <h2>當天流程與暗號</h2>
+  <div class="todo" id="flow"><p class="muted">載入中…</p></div>
+  <p class="note">首頁最下面的 👏 連點 11 下就會來到這裡。轉網址給阿公阿嬤時，請用首頁網址。</p>
 </section>
 
-<section class="platform" aria-labelledby="plTitle">
+<section class="platform" data-v="board" aria-labelledby="plTitle">
   <h2 id="plTitle">月台留言</h2>
   <p>15 位乘客都在月台上了。<b>點一個人</b>，就能看到他想說的話；喜歡就按個 👍。</p>
   <p class="hint muted">人很多，可以左右滑動。紅色數字＝那個人說了幾句話。<br>點一下會跟你打招呼；<b>按住往上拉</b>可以把人拎起來甩一甩。<br>手機<b>長按</b>、電腦<b>點兩下</b>就能送愛心 ♥，收到越多愛心的人，頭上飄的愛心越多。</p>
 </section>
 </main>
 
-<div class="strip" id="strip"><div class="people" id="people"></div></div>
+<div class="strip" id="strip" data-v="board"><div class="people" id="people"></div></div>
 
 <div class="wrap">
-  <form class="compose" id="compose">
+  <form class="compose" id="compose" data-v="board">
     <label for="who">我是</label>
     <select id="who" required><option value="">請選擇你是誰</option></select>
     <label for="text">想說的話</label>
     <textarea id="text" maxlength="300" placeholder="例如：好期待回車埕！阿公記得穿暖一點。" required></textarea>
     <div class="sendrow"><span class="status" id="status" role="status"></span><button class="send" id="send" type="submit">說出來</button></div>
   </form>
-  <section class="photos" aria-labelledby="phTitle">
+  <section class="photos" data-v="photos" aria-labelledby="phTitle">
     <h2 id="phTitle">旅途相簿</h2>
     <p>這兩天拍的照片，全部丟進來！LOLO 會把大家的照片剪成一支<b>鑽石婚號旅行紀念影片</b>。</p>
     <form class="compose" id="phForm">
@@ -372,19 +388,32 @@ footer{text-align:center;font-size:13px;padding-block:40px}
     <p class="muted" id="phCount"></p>
     <ul class="wall" id="wall" aria-label="大家上傳的照片"></ul>
     <button class="more" id="phMore" type="button" hidden>看更多照片</button>
-    <dialog id="phBig" aria-label="放大的照片"><img id="phBigImg" alt=""><p><span id="phBigCap"></span><button type="button" id="phPrev" aria-label="上一張">‹</button><button type="button" id="phNext" aria-label="下一張">›</button><button type="button" id="phClose">關閉</button></p></dialog>
     <p id="phAlbum" hidden>有拍<b>影片</b>、或想保留原始畫質？<a id="phAlbumLink" target="_blank" rel="noopener">丟進 Google 共用相簿 →</a><small class="muted">（需要登入 Google 帳號）</small></p>
   </section>
-  <footer class="muted">鑽石婚號 · 下一站 2026.12.25 車埕</footer>
+  <footer class="muted"><button class="clap" id="clap" type="button" data-v="home" aria-label="拍拍手">👏</button>鑽石婚號 · 下一站 2026.12.25 車埕</footer>
 </div>
+<dialog id="phBig" aria-label="放大的照片"><img id="phBigImg" alt=""><p><span id="phBigCap"></span><button type="button" id="phPrev" aria-label="上一張">‹</button><button type="button" id="phNext" aria-label="下一張">›</button><button type="button" id="phClose">關閉</button></p></dialog>
+<nav class="tabs" aria-label="網站選單">
+  <a href="#">首頁</a>
+  <a href="#tt">時刻表</a>
+  <a href="#board">留言</a>
+  <a href="#photos">相簿</a>
+</nav>
 
 <script src="chars.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const store={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 
-// ── 家人版：網址結尾 #crew 才顯示問卷說明（沒有就是阿公阿嬤也能看的全家版）──
-const crew=()=>{const on=location.hash==='#crew';$("crewSec").hidden=!on;if(on&&!window.CREW_LOADED)loadPeek()};
+// ── 分頁：底部選單切換（同一個檔案，用網址 # 決定顯示哪一頁）。#zongzhao＝總召車廂，不在選單裡 ──
+const VIEWS={'#tt':'tt','#board':'board','#photos':'photos','#zongzhao':'crew'};
+function route(){
+  const v=VIEWS[location.hash]||'home';
+  document.querySelectorAll('[data-v]').forEach(el=>el.hidden=!el.dataset.v.split(' ').includes(v));
+  document.querySelectorAll('.tabs a').forEach(a=>(VIEWS[a.hash]||'home')===v?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current'));
+  if(v==='crew'&&!window.CREW_LOADED)loadPeek();
+  scrollTo(0,0);
+}
 // ── 待辦：內容在 crew.js 的 window.TODO，勾選與留言存在 Apps Script，全家看到同一份 ──
 const todoMsg=t=>{$('todoMsg').textContent=t};
 const todoBoxes=()=>[...document.querySelectorAll('#todo input')];
@@ -427,29 +456,57 @@ $('todoForm').addEventListener('submit',async e=>{e.preventDefault();
   const btn=e.target.querySelector('button'),name=$('todoName').value;btn.disabled=true;
   const j=await todoPost({action:'comment',name,text:$('todoText').value});btn.disabled=false;
   if(j){$('todoText').value='';store.set('todoName',name)}});
-function loadPeek(){ // 答案放在 crew.js，只有家人版才下載，全家版的網頁原始碼裡沒有答案
+function loadPeek(){ // 待辦與流程放在 crew.js，進總召車廂才下載
   window.CREW_LOADED=1;const sc=document.createElement('script');sc.src='crew.js';
-  sc.onload=()=>{renderTodo();const box=$('peek');box.replaceChildren();
-    for(const it of window.CREW||[]){const sec=document.createElement('section');
-      const h=document.createElement('h3');h.textContent=it.q;sec.append(h);
-      if(it.note){const p=document.createElement('p');p.className='intro';p.textContent=it.note;sec.append(p)}
-      const ul=document.createElement('ul');for(const a of it.a){const li=document.createElement('li');li.textContent=a;ul.append(li)}
-      sec.append(ul);box.append(sec)}};
-  sc.onerror=()=>{$('peek').textContent='搶先看暫時載入不了，等一下再重新整理看看。';$('todo').textContent='待辦暫時載入不了，等一下再重新整理看看。'};
+  sc.onload=()=>{renderTodo();const box=$('flow');box.replaceChildren();
+    const ul=document.createElement('ul');
+    for(const it of window.FLOW||[]){const li=document.createElement('li');li.textContent=it;ul.append(li)}
+    box.append(ul.children.length?ul:Object.assign(document.createElement('p'),{textContent:'流程還沒寫好。'}))};
+  sc.onerror=()=>{$('todo').textContent='待辦暫時載入不了，等一下再重新整理看看。'};
   document.head.append(sc);
 }
-crew();addEventListener('hashchange',crew);
+route();addEventListener('hashchange',route);
 
 // ── 倒數：2026-12-25 08:30 台灣時間（重慶南路上車）──
 const TARGET=new Date('2026-12-25T08:30:00+08:00').getTime(); // 第一班上車：08:30 重慶南路
+// 測試用：網址加 ?t=2026-12-25T10:00 就能假裝現在是那個時間（台灣時間）
+const FAKE=new URLSearchParams(location.search).get('t'),now=()=>FAKE?Date.parse(FAKE+':00+08:00'):Date.now();
 const p2=n=>String(n).padStart(2,'0');
 function tick(){
-  let s=Math.max(0,Math.floor((TARGET-Date.now())/1000));
+  let s=Math.max(0,Math.floor((TARGET-now())/1000));
   if(!s){$('clock').innerHTML='<span class="n">列車到站！</span>';return}
   $('cd').textContent=Math.floor(s/86400);$('ch').textContent=p2(Math.floor(s%86400/3600));$('cm').textContent=p2(Math.floor(s%3600/60));$('cs').textContent=p2(s%60);
   setTimeout(tick,1000-Date.now()%1000);
 }
 tick();
+
+// ── 首頁依日期換：出發前＝倒數｜旅途中（12/25 08:30 起）＝現在到哪一站｜12/26 12:30 起＝紀念館 ──
+const UNLOCK=Date.parse('2026-12-25T17:30:00+08:00'),MEM=Date.parse('2026-12-26T12:30:00+08:00');
+const STOPS=[...document.querySelectorAll('.day')].flatMap((d,i)=>[...d.querySelectorAll('li')].map(li=>({li,
+  hm:li.querySelector('time').textContent,name:li.querySelector('span').firstChild.textContent.trim(),
+  t:Date.parse(`2026-12-${25+i}T${li.querySelector('time').textContent}:00+08:00`)})));
+function phase(){
+  const t=now(),trip=t>=TARGET&&t<MEM,mem=t>=MEM,open=t>=UNLOCK;
+  let i=-1;if(trip)STOPS.forEach((s,k)=>{if(s.t<=t)i=k});
+  STOPS.forEach((s,k)=>s.li.classList.toggle('here',k===i));
+  if(i>=0){ // 站牌＝現在在哪；上方大字＝下一站
+    const short=x=>x.replace(/^抵達/,'').replace(/（.*）/,''),nm=short(STOPS[i].name),nx=STOPS[i+1],sb=$('signBig');
+    sb.textContent=nm;sb.setAttribute('font-size',28);sb.style.fontFamily='var(--sans)';sb.style.fontWeight=900;
+    if(nm.length>6){sb.setAttribute('textLength',200);sb.setAttribute('lengthAdjust','spacingAndGlyphs')}else sb.removeAttribute('textLength');
+    $('signSub').textContent='現在位置';$('cdLabel').textContent=nx?'下一站':'';
+    const n=document.createElement('span');n.className='n';n.style.fontSize='clamp(24px,6vw,52px)';n.textContent=nx?`${nx.hm} ${short(nx.name)}`:'快到家了';n.style.whiteSpace='nowrap';
+    $('clock').replaceChildren(n);
+  }
+  $('giftSec').toggleAttribute('data-off',!(trip||mem));$('giftLock').hidden=open;$('giftLinks').hidden=!open;
+  $('giftTitle').textContent=mem?'鑽石婚號紀念館':open?'給阿公阿嬤的禮物打開了':'今晚 17:30 解鎖';
+  document.querySelectorAll('[data-mem]').forEach(e=>e.hidden=!mem);
+}
+phase();setInterval(phase,30000);
+
+// ── 首頁的 👏：連點 11 下（每下間隔 2 秒內）打開總召車廂 ──
+{let n=0,last=0;$('clap').onclick=e=>{const t=Date.now();n=t-last<2000?n+1:1;last=t;
+  e.currentTarget.animate?.([{transform:'scale(1.3)'},{transform:'none'}],{duration:200});
+  if(n>=11){n=0;location.hash='#zongzhao'}}}
 
 // ── 星星（固定種子，每次位置一樣）──
 {let r=7,h='';const rnd=()=>(r=r*16807%2147483647)/2147483647;for(let i=0;i<70;i++)h+=`<circle cx="${(rnd()*800).toFixed(1)}" cy="${(172+rnd()*210).toFixed(1)}" r="${(rnd()*1.4+.4).toFixed(1)}" opacity="${(rnd()*.6+.3).toFixed(2)}"/>`;$('stars').innerHTML=h}
@@ -689,7 +746,14 @@ function phShow(j){
     b.type='button';b.setAttribute('aria-label',`${p.name} 傳的照片，放大`);img.src=thumb(p.id,400);img.alt='';img.loading='lazy';s.textContent=p.name;
     b.onclick=()=>phOpen(i);b.append(img,s);li.append(b);return li}));
   $('phMore').hidden=PHOTOS.length<=phShown;
+  $('reel').replaceChildren(...PHOTOS.slice(0,5).map((p,i)=>{const li=document.createElement('li'),b=document.createElement('button'),img=document.createElement('img'),s=document.createElement('span');
+    b.type='button';b.setAttribute('aria-label',`${p.name} 傳的照片，放大`);img.src=thumb(p.id,400);img.alt='';s.textContent=p.name;
+    b.onclick=()=>phOpen(i);b.append(img,s);li.append(b);return li}));
+  $('reelSec').toggleAttribute('data-off',!PHOTOS.length);
 }
+// 首頁輪播：有照片才出現，每 3.5 秒往右滑一張，滑到底回第一張
+setInterval(()=>{const r=$('reel');if(calm||document.hidden||!r.children.length||r.matches(':hover'))return;
+  const w=r.firstChild.offsetWidth+8,end=r.scrollLeft+w>r.scrollWidth-r.clientWidth+4;r.scrollTo({left:end?0:r.scrollLeft+w,behavior:'smooth'})},3500);
 function phOpen(i){
   phAt=(i+PHOTOS.length)%PHOTOS.length;const p=PHOTOS[phAt];
   $('phBigImg').src=thumb(p.id,1600);$('phBigImg').alt=`${p.name} 傳的照片`;$('phBigCap').textContent=`${p.name} · ${phWhen(p.t)}`;
