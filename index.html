@@ -794,6 +794,14 @@ $('phForm').addEventListener('submit',async e=>{
   phSay(bad?`傳好 ${ok} 張，有 ${bad} 張失敗，請再選一次失敗的那幾張`:`${ok>1?ok+" 張都":"照片"}傳好了，謝謝 ${name}！`,bad>0);
 });
 
+// 除錯：網址加 ?debug 會在畫面上列出比手機螢幕寬的東西（查 iPhone 右邊被切掉用，查完就拿掉）
+if(location.search.includes('debug'))setTimeout(()=>{const W=innerWidth,de=document.documentElement,
+  bad=[...document.querySelectorAll('body *')].filter(e=>e.getClientRects().length&&!e.closest('.tabs')&&e.getBoundingClientRect().right>W+1)
+   .sort((a,b)=>b.getBoundingClientRect().right-a.getBoundingClientRect().right).slice(0,12)
+   .map(e=>`${e.tagName.toLowerCase()}#${e.id}.${String(e.className).split(' ')[0]} 寬${Math.round(e.getBoundingClientRect().width)} 右${Math.round(e.getBoundingClientRect().right)}`);
+  const box=document.createElement('pre');box.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99;background:#fff;color:#000;font:12px/1.4 monospace;white-space:pre-wrap;padding:8px;margin:0';
+  box.textContent=`innerWidth ${W} clientWidth ${de.clientWidth} scrollWidth ${de.scrollWidth} body ${document.body.offsetWidth} vv ${visualViewport?.width}\n`+bad.join('\n');document.body.append(box)},3000);
+
 // 列車進站（進到畫面時才開進來）
 requestAnimationFrame(()=>requestAnimationFrame(()=>$('train').classList.add('in')));
 </script>
